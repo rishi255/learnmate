@@ -19,6 +19,8 @@ A student/professional/enthusiast who:
 
 ## 🔧 Multi-Agent Architecture
 
+![Multi-Agent Architecture](./multi_agent_design_flowchart.png)
+
 ### 1. **Research Agent (Content Curator)**
 
 -   Accepts a topic input
