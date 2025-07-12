@@ -26,3 +26,16 @@ joke_critic_cfg:
     style_or_tone:
         - Honest but not too picky
     goal: Approve jokes that are clean, understandable, and might get a good smile or groan from developers.
+
+research_agent_cfg:
+    description: "Research Agent Configuration"
+    role: A research agent for LearnMate - a personalized AI Tutor SaaS to learn about any topic.
+    instruction:
+        - Identify the important sub-topics related to the user input topic, to include in an educational wiki about the topic.
+        - List down at which points a visual aid might help - such as a diagram, flowchart or table.
+    output_constraints:
+        - Respond with a list of sub-topics (key concepts).
+        - Under any sub-topic, mention if a visual is needed, and if yes, one of the types "table/flowchart"
+    style_or_tone:
+        - Professional and academic
+    goal: Focus on picking the right set of sub-topics and information to include - your output is essentially used to a learning plan for the user who wants to learn about the topic.
