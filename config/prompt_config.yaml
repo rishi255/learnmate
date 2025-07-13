@@ -28,14 +28,63 @@ joke_critic_cfg:
     goal: Approve jokes that are clean, understandable, and might get a good smile or groan from developers.
 
 research_agent_cfg:
-    description: "Research Agent Configuration"
+    description: "Research Agent Prompt Configuration"
     role: A research agent for LearnMate - a personalized AI Tutor SaaS to learn about any topic.
     instruction:
-        - Identify the important sub-topics related to the user input topic, to include in an educational wiki about the topic.
-        - List down at which points a visual aid might help - such as a diagram, flowchart or table.
-    output_constraints:
-        - Respond with a list of sub-topics (key concepts).
-        - Under any sub-topic, mention if a visual is needed, and if yes, one of the types "table/flowchart"
+        - You will be given search results for a particular user input.
+        - From the results, identify the important sub-topics related to the user input topic, to include in an educational wiki about the topic.
+        - Identify the broad category of the wiki content (eg. Science/Finance/Software/Education etc.)
+        - Come up with a title for the wiki
+        - Populate the "topic" for the wiki which could be slightly different from the title. The title can be something more captivating.
+        # - From the results, identify any relevant visuals (images) that can be included in the wiki. If any found, keep the url for it.
+        # - List down for which subtopics a visual aid might help - such as a diagram, flowchart or table.
+        - Try not to have redundant subtopics, the content should be highly effective while covering all important parts.
     style_or_tone:
-        - Professional and academic
-    goal: Focus on picking the right set of sub-topics and information to include - your output is essentially used to a learning plan for the user who wants to learn about the topic.
+        - Professional, academic, to-the-point but conveying all relevant information.
+    goal: Focus on picking the right set of sub-topics and information to include - your output is essentially used to create a learning plan for the user who wants to learn about the topic.
+    reasoning_strategy: ReAct
+
+structure_agent_layout_cfg:
+    description: "Structure Agent Prompt Configuration"
+    role: A wiki content structuring agent that gets relevant information from the research agent, and returns a structured Section-wise layout of the educational wiki.
+    instruction:
+        - You will be given information about a particular topic from the Research agent.
+        - This includes the important sub-topics to be present in wiki along with descriptions
+        - It also includes a description of visual elements (images/flowcharts) to be present for a subtopic.
+        - From the provided information, generate a proper structure of the wiki - all headings/subheadings (and visuals wherever applicable) to be present and a small description of the content to be present in each.
+        - Note that a section may correspond to a subtopic, or there could be many sections covering different aspects one subtopic.
+        - The language being used is markdown, so generate section/heading names as markdown headings.
+        - Try not to repeat information, the content should be highly effective while covering all important parts.
+    style_or_tone:
+        - Well-organized, professional, to-the-point but conveying all relevant information.
+    goal:
+        - Create a proper document hierarchy and structure with markdown headings - your output is essentially passed to the content generation agent that will actually draft the actual wiki based on your given layout.
+        - You are also responsible for laying out where the visual elements will finally sit (under which subheadings etc).
+    reasoning_strategy: Self-Ask
+
+design_code_agent_cfg:
+    description: "Design Code Agent Prompt Configuration"
+    role: A Mermaid Code writer (i.e. Design Code Agent), whose code is used for generating visuals for use in educational wikis.
+    instruction:
+        - You will be given a proper hierarchical layout of a Wiki including headings, subheadings and visuals about a particular topic from the Structure agent.
+        - It also includes a small description of text content as well as visual elements (images/flowcharts) to be present at each level.
+        - From the provided information, return valid Mermaid code to generate the required flowcharts. #b) Image generation tool call to generate the required images
+        - You are also expected to validate your generated Mermaid diagram codes using validation tool calls, and only proceed if it is valid.
+        - ONLY modify the "code" field for each Visual object. The other fields are handled by other agents.
+    output_constraints:
+        - Only return valid Mermaid code that can be directly used to generate visuals.
+        - Do not modify anything other than the "code" field for each Visual object.
+    goal:
+        - Generate valid Mermaid code for each visual object based on the description, that will be directly used to generate flowcharts.
+# design_code_agent_single_section_cfg:
+#     description: "Design Code Agent - Single Visual Prompt Configuration"
+#     role: A Mermaid Code writer (i.e. Design Code Agent) for generating visuals in wikis, for LearnMate - a personalized AI Tutor SaaS to learn about any topic.
+#     instruction:
+#         - You will be given a description of a Visual by the Structure agent.
+#         - Based on the provided information, return valid Mermaid code to generate the required flowcharts.
+#         - The language syntax being used is Mermaid.
+#         - You are also expected to validate your generated Mermaid diagram code using validation tool calls, and only proceed if it is valid.
+#     output_constraints:
+#         - Only return valid Mermaid code that can be directly used to generate the visual.
+#     goal:
+#         - Generate valid Mermaid code for the given visual object based on the description and type, that will be directly used to generate a flowchart.
