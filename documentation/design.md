@@ -1,71 +1,94 @@
-## 🚀 Project Title: **LearnMate: Visual Wiki + Personalized Tutor**
+## 🚀 Project Title: **LearnMate: Visual Wiki Generator**
 
-### 🎯 Goal:
+### 🎯 Goal
 
-Build a multi-agent AI system that **generates a visually structured wiki** on a given topic and **tutors the user interactively**, adapting based on their understanding and preferences — all accessible via a **Streamlit web interface**.
+Build a multi-agent system that **generates comprehensive, visually structured wikis** on any topic, with automatically generated diagrams and clear explanations — all accessible via a **Streamlit web interface**.
 
 ---
 
-### 🧠 User Persona:
+### 🧠 User Persona
 
 A student/professional/enthusiast who:
 
--   Wants a fast but comprehensive grasp of a topic
--   Prefers **visually enhanced** learning (diagrams, tables, flowcharts)
--   Likes interactive guidance and feedback
--   Appreciates a **personalized learning path**
+- Wants a fast but comprehensive grasp of a topic
+- Prefers **visually enhanced** content (diagrams, tables, flowcharts)
+- Values clear, structured explanations
+- Appreciates well-organized information
 
 ---
 
 ## 🔧 Multi-Agent Architecture
 
-![Multi-Agent Architecture](./multi_agent_design_flowchart.png)
+<img src="./multi_agent_design_flowchart.png" width="50%" alt="Multi-Agent Architecture">
 
-### 1. **Research Agent (Content Curator)**
+### 1. **Research Agent**
 
--   Accepts a topic input
--   Performs targeted search or document parsing
--   Identifies key concepts and knowledge gaps
--   Flags sections that would benefit from visuals
+- **Input**: Topic from user
+- **Functions**:
+  - Performs comprehensive web search
+  - Extracts key subtopics and concepts
+  - Identifies visualization opportunities
+  - Gathers reliable source material
+- **Output**: Research data with source citations
 
-### 2. **Structure & Design Agent (Wiki Architect)**
+### 2. **Planner Agent**
 
--   Designs a logical content structure (sections, flow)
--   Decides on where to insert visual elements (flowcharts, tables, diagrams)
--   Outputs a wiki "blueprint"
+- **Input**: Research results
+- **Functions**:
+  - Creates logical content structure
+  - Plans section layout and flow
+  - Identifies visual aid placement
+  - Distributes content between text and diagrams
+- **Output**: Content plan and visual requirements
 
-### 3. **Content Generator Agent**
+### 3a. **Content Writer Agent** _(Parallel Path 1)_
 
--   Writes well-structured, modular content per blueprint
--   Integrates image/diagram placeholders or generates visuals via:
+- **Input**: Content plan from Planner
+- **Functions**:
+  - Generates educational content
+  - Structures text for clarity
+  - Maintains consistent style
+  - Integrates examples
+- **Output**: Draft content for validation
 
-    -   Mermaid.js (flowcharts)
-    -   DALL·E/Stable Diffusion (illustrative images)
+### 3b. **Mermaid Generator** _(Parallel Path 2)_
 
-### 4. **Personalized Tutor Agent**
+- **Input**: Visual requirements from Planner
+- **Functions**:
+  - Creates Mermaid.js diagrams
+  - Designs clear visual layouts
+  - Optimizes diagram structure
+- **Output**: Draft diagrams for validation
 
--   Walks the user through the content in **small chunks**
--   Asks understanding-check questions after each chunk
--   Adapts:
+### 4a. **Content Validator**
 
-    -   If user answers correctly → proceed or offer deep dive
-    -   If incorrect/unsure → explain again with a simpler example or analogy
+- **Input**: Draft content
+- **Functions**:
+  - Verifies accuracy
+  - Checks completeness
+  - Ensures clarity
+  - Provides feedback loop to Content Writer
+- **Output**: Validated content or revision requests
 
-### 5. **Reviewer Agent** _(Optional but useful for auto-feedback)_
+### 4b. **Mermaid Validator**
 
--   Runs content through checks for:
+- **Input**: Draft diagrams
+- **Functions**:
+  - Validates diagram syntax
+  - Checks visual clarity
+  - Ensures diagram usefulness
+  - Provides feedback loop to Mermaid Generator
+- **Output**: Validated diagrams or revision requests
 
-    -   Accuracy
-    -   Clarity
-    -   Completion
+### Parallel Processing Note
 
--   Suggests improvements before Tutor begins
+Paths 3a+4a and 3b+4b run in parallel for efficiency
 
 ---
 
 ## 🌐 User Interface: **Streamlit Frontend**
 
-### 📌 Layout Overview:
+### 📌 Layout Overview
 
 | UI Section                 | Function                                                 |
 | -------------------------- | -------------------------------------------------------- |
@@ -77,39 +100,35 @@ A student/professional/enthusiast who:
 | **Progress Tracker**       | Visual indicator of user’s learning journey              |
 | **Feedback Box**           | User gives optional feedback or asks to revisit sections |
 
-### Streamlit Features Used:
+### Streamlit Features Used
 
--   `st.chat_message` for Tutor interaction
--   `st.expander` for collapsible content sections
--   `st.image` for visual rendering
--   `st.session_state` for progress tracking
--   (Optional) Audio using `st.audio` if TTS is enabled
+- `st.chat_message` for Tutor interaction
+- `st.expander` for collapsible content sections
+- `st.image` for visual rendering
+- `st.session_state` for progress tracking
+- (Optional) Audio using `st.audio` if TTS is enabled
 
 ---
 
-## ✅ MVP (Target in 2 Days)
+## ✅ MVP
 
--   Topic Input → Generates a 3–4 section visual wiki
--   At least 1 diagram + 1 illustrative image
--   Streamlit UI showing:
-
-    -   Wiki content
-    -   Visuals
-    -   Tutor interaction (basic Q\&A)
-
--   No user login/auth or persistence needed
+- Topic Input → Generates a 3–4 section visual wiki
+- At least 1 Mermaid diagram per section
+- Streamlit UI showing:  
+  - Wiki content with expandable sections
+  - Visuals with Mermaid diagrams
+- No user login/auth or persistence needed
 
 ---
 
 ## ✨ Optional Enhancements (Stretch Goals)
 
-| Feature                            | Value                                      |
-| ---------------------------------- | ------------------------------------------ |
-| TTS Integration (e.g., ElevenLabs) | Auditory learners                          |
-| Quiz Mode                          | Post-learning assessment                   |
-| Bookmark / Export Wiki as PDF      | Revisit or share                           |
-| User Profile & Progress Save       | Personalization over time                  |
-| LLM-RAG integration                | Better content grounding via external PDFs |
+| Feature                       | Value                                      |
+| ---------------------------- | ------------------------------------------ |
+| Export Wiki as PDF           | Easy sharing and offline access            |
+| Multiple diagram styles      | Support for more visual formats            |
+| Custom diagram themes        | Consistent visual styling                  |
+| LLM-RAG integration         | Better content grounding via external PDFs |
 
 ---
 

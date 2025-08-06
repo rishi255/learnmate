@@ -3,29 +3,36 @@ config:
   layout: dagre
 ---
 flowchart TD
- subgraph B["Research Agent"]
-        B1["Tool 1: Web Search<br><i>Searches topic online</i>"]
-        B2["LLM Call 1:<br><i>Extract sub-topics</i>"]
-        B3["LLM Call 2:<br><i>Identify visuals needed &amp; types</i>"]
+ subgraph B["**Research Agent**"]
+        B1["**Tool 1**: Web Search<br><i>Initial topic search</i>"]
+        B2["**LLM Call 1**:<br><i>Initial Research:<br>Scope &amp; Subtopics</i>"]
+        B3["**LLM Call 2**:<br><i>Deep Research:<br>Detailed Analysis &amp; Visualization Needs</i>"]
   end
- subgraph C["Structure & Design Agent"]
-        C1["LLM Call 3:<br><i>Generate wiki section layout</i>"]
-        C2["LLM Call 4:<br><i>Create flowchart instructions</i>"]
-        C3["Tool 2: Mermaid Generator<br><i>Render diagrams &amp; save paths</i>"]
+ subgraph P["**Content Planner Agent**"]
+        P1["**LLM Call 3**:<br><i>Structure Layout:<br>Sections &amp; Flow</i>"]
+        P2["**LLM Call 4**:<br><i>Resource Planning:<br>Content &amp; Visual Distribution</i>"]
   end
- subgraph D["Content Generator Agent"]
-        D1["LLM Call 5:<br><i>Generate markdown text</i>"]
-        D2["LLM Call 6:<br><i>Embed diagrams/images into markdown</i>"]
+ subgraph ContentPath["Content Generation"]
+        C["**Content Writer Agent**"]
+        CV["**Content Validator Agent**"]
   end
- subgraph E["Reviewer Agent"]
-        E1["LLM Call 7:<br><i>Review and approve/reject content</i>"]
+ subgraph VisualPath["Visuals Generation"]
+        M["**Mermaid Generator Agent**"]
+        MV["**Mermaid Validator Tool**"]
   end
+    A["User Input: Topic"] --> B
     B1 --> B2
     B2 --> B3
-    C1 --> C3
-    C2 --> C3
-    D1 --> D2
-    A["User Input: Topic"] --> B
-    B --> C
-    C --> D
-    D --> E
+    P1 --> P2
+    C --> CV
+    CV -- Feedback --> C
+    M --> MV
+    MV -- Feedback --> M
+    B --> P
+    P --> ContentPath & VisualPath
+    CV --> F["Final Content"]
+    MV --> F
+    style CV fill:#ffe6e6,stroke:#333
+    style MV fill:#ffe6e6,stroke:#333
+    style ContentPath fill:#f5f0ff,stroke:#333
+    style VisualPath fill:#f0f5ff,stroke:#333

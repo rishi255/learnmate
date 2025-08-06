@@ -1,2 +1,3 @@
-# learnmate
-A multi-agent AI system that generates a visually structured wiki on a given topic and tutors the user interactively, adapting based on their understanding and preferences.
+# LearnMate: Visual Wiki Generator
+
+A multi-agent AI system that generates comprehensive, visually structured wikis on any given topic, with automatically generated diagrams and clear explanations.

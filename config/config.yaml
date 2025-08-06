@@ -1,6 +1,7 @@
 research_model_llm: gpt-4o-mini
-structure_model_llm: gpt-4o-mini
-design_code_model_llm: gpt-4o-mini
+planner_model_llm: gpt-4o-mini
+content_writer_model_llm: gpt-4o-mini
+design_coder_model_llm: gpt-4o-mini
 
 reasoning_strategies:
     CoT: |
