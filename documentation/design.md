@@ -43,22 +43,24 @@ A student/professional/enthusiast who:
 
 ### 3a. **Content Writer Agent** _(Parallel Path 1)_
 
-- **Input**: Content plan from Planner
+- **Input**: Content plan (entire structure) from Planner
 - **Functions**:
-  - Generates educational content
+  - Invokes LLM once per complete structure plan (not per section)
+  - Generates comprehensive educational content covering all sections
   - Structures text for clarity
   - Maintains consistent style
   - Integrates examples
-- **Output**: Draft content for validation
+  - **Does not generate visual aid content**
+- **Output**: Draft content (text-only, no visuals) for validation
 
-### 3b. **Mermaid Generator** _(Parallel Path 2)_
+### 3b. **Visual Writer Agent** _(Parallel Path 2)_
 
 - **Input**: Visual requirements from Planner
 - **Functions**:
-  - Creates Mermaid.js diagrams
+  - Creates Mermaid.js diagrams and other visuals as needed
   - Designs clear visual layouts
   - Optimizes diagram structure
-- **Output**: Draft diagrams for validation
+- **Output**: Draft diagrams and visuals for validation
 
 ### 4a. **Content Validator**
 

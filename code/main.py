@@ -1,4 +1,6 @@
 import json
+import os
+from collections import OrderedDict
 from operator import add
 from pathlib import Path
 from typing import Annotated, List, Literal
@@ -9,14 +11,13 @@ from langchain_core.tools import tool  # Import the tool decorator
 
 # from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_tavily import TavilySearch
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.store.memory import InMemoryStore
 from llm import get_llm
-from paths import CONFIG_FILE_PATH, PROMPT_CONFIG_FILE_PATH
+from paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
 from prompt_builder import build_prompt_from_config
-from paths import CONFIG_FILE_PATH, PROMPT_CONFIG_FILE_PATH, OUTPUTS_DIR
 from pydantic import BaseModel, Field
 from pyjokes import get_joke
 from typing_extensions import TypedDict
@@ -25,6 +26,8 @@ from utils import load_config
 # ===================
 # Define Structured Output Classes for Agents
 # ===================
+
+EXIT_COMMAND = "exit"  # Command to exit the bot
 
 
 class ResearchedSubtopicOutput(BaseModel):
@@ -117,6 +120,36 @@ class PlannerOutput(BaseModel):
     )
 
 
+class WikiSectionOutput(BaseModel):
+    """Represents a section of the generated wiki, excluding visuals."""
+
+    title: str = Field(description="Title of the section")
+    content: str = Field(
+        description="Full markdown content for this section (text only, no visuals)"
+    )
+
+
+class WikiOutput(BaseModel):
+    """Structured output for the full wiki (text only, no visuals)."""
+
+    title: str = Field(description="Title of the wiki page")
+    sections: List[WikiSectionOutput] = Field(
+        default_factory=list,
+        description="Textual sections for the wiki, one per section in the plan, in order.",
+    )
+
+
+# Mapping state keys to node names and their expected output types.
+STATE_KEY_MAP = OrderedDict(
+    {
+        "user_input": ("get_user_input_node", str),
+        "initial_research": ("research_agent_node", InitialResearchOutput),
+        "deep_research": ("research_agent_node", DeepResearchOutput),
+        "structure_plan": ("planner_agent_node", PlannerOutput),
+        "wiki_content": ("content_writer_agent_node", WikiOutput),
+    }
+)
+
 # ===================
 # Define State
 # ===================
@@ -179,6 +212,11 @@ def get_topic_directory_name(topic: str, create: bool = True) -> str:
 
 def get_user_input_node(state: AgentState) -> dict:
     """Gets user input for the topic of the wiki."""
+    # Check if user_input is already populated
+    if state.get("user_input"):
+        print("✅ User input is already populated. Skipping input node.")
+        return {}
+
     print("Welcome to the Wiki Creator Bot! Let's create a wiki together.")
     user_input = input(
         "Enter the topic you want to create a wiki for (or type 'exit' to quit): "
@@ -200,7 +238,7 @@ def route_choice(
     if not state["user_input"]:
         print("❌ No input provided. Please enter a topic.")
         return "get_user_input_node"
-    elif state["user_input"].lower() == "exit":
+    elif state["user_input"].lower() == EXIT_COMMAND:
         return "exit_bot_node"
     else:
         return "research_agent_node"
@@ -265,6 +303,11 @@ def research_agent_node(state: AgentState) -> dict:
     then searches each key concept for detailed understanding.
     Returns initial and deep research results in structured format.
     """
+    # Check if initial_research is already populated
+    if state.get("initial_research"):
+        print("✅ Initial research is already populated. Skipping research node.")
+        return {}
+
     research_llm = get_llm(app_cfg["research_model_llm"], temperature=0)
     search_tool = get_web_search_tool()
 
@@ -312,6 +355,11 @@ def research_agent_node(state: AgentState) -> dict:
 
 def planner_agent_node(state: AgentState) -> dict:
     """Planner agent - creates a structured plan for the wiki content with sections and visual suggestions, based on the deep research done by the research agent."""
+    # Check if structure_plan is already populated
+    if state.get("structure_plan"):
+        print("✅ Structure plan is already populated. Skipping planner node.")
+        return {}
+
     config = prompt_cfg["planner_agent_cfg"]
     planner_llm = get_llm(app_cfg["planner_model_llm"], temperature=0)
 
@@ -330,10 +378,42 @@ def planner_agent_node(state: AgentState) -> dict:
     }
 
 
-# TODO: Implement Content Writer Agent
 def content_writer_agent_node(state: AgentState) -> dict:
-    """Content writer agent - generates the actual wiki content for each section based on the planner's structure."""
-    pass
+    """Content writer agent - generates the full wiki content for all sections in a single LLM call with structured output, excluding any visual content."""
+
+    if state.get("wiki_content"):
+        print("✅ Wiki content is already populated. Skipping content writer node.")
+        return {}
+
+    content_llm = get_llm(app_cfg["content_writer_model_llm"], temperature=0.3)
+    structure_plan: PlannerOutput = state["structure_plan"]
+
+    # Build a single prompt for the entire plan (all sections)
+    full_plan_prompt = build_prompt_from_config(
+        prompt_cfg["content_writer_agent_cfg"],
+        app_config=app_cfg,
+        input_data=repr(structure_plan),
+    )
+
+    # Single LLM call to generate all textual content with strongly-typed structured output
+    wiki_output: WikiOutput = content_llm.with_structured_output(WikiOutput).invoke(
+        full_plan_prompt
+    )
+
+    # Convert structured output to markdown (text only)
+    wiki_content = f"# {wiki_output.title}\n\n"
+    for section in wiki_output.sections:
+        wiki_content += f"{section.title}\n{section.content}\n\n"
+
+    topic = get_cleaned_topic_name(state["user_input"])
+    topic_dir = get_topic_directory_name(topic, create=True)
+    output_file = str(Path(topic_dir) / "generated_wiki_content.md")
+
+    with open(output_file, "w") as f:
+        f.write(wiki_content)
+
+    print(f"📄 Wiki content generated and saved to: {output_file}")
+    return {"wiki_content": wiki_content}
 
 
 # TODO: Implement Design Coder Agent
@@ -345,69 +425,95 @@ def design_coder_agent_node(state: AgentState) -> dict:
 # ========== Graph Assembly ==========
 
 
-def build_graph() -> CompiledStateGraph:
-    """Builds the LangGraph graph."""
-
-    builder = StateGraph(AgentState)
-
-    builder.add_node("get_user_input_node", get_user_input_node)
-    builder.add_node("research_agent_node", research_agent_node)
+def register_nodes(builder: StateGraph) -> None:
+    """Registers all nodes in the graph."""
+    for node_name in set([x[0] for x in STATE_KEY_MAP.values()]):
+        builder.add_node(node_name, globals()[node_name])
     builder.add_node("exit_bot_node", exit_bot_node)
-    # TODO: These nodes will be implemented in next phases
-    builder.add_node("planner_agent_node", planner_agent_node)
-    # builder.add_node(
-    #     "content_writer_agent_node",
-    #     content_writer_agent_node
-    # )
-    # builder.add_node(
-    #     "design_coder_agent_node",
-    #     design_coder_agent_node
-    # )
 
+
+def define_edges(builder: StateGraph) -> None:
+    """Defines the edges of the graph."""
     builder.set_entry_point("get_user_input_node")
-
-    # decides whether to return to input or proceed to research
     builder.add_conditional_edges("get_user_input_node", route_choice)
-    # TODO: Update edges when implementing other agents
     builder.add_edge("research_agent_node", "planner_agent_node")
-    # builder.add_edge("planner_agent_node", "content_writer_agent_node")
+    builder.add_edge("planner_agent_node", "content_writer_agent_node")
     # builder.add_edge("content_writer_agent_node", "design_coder_agent_node")
-    builder.add_edge("research_agent_node", "exit_bot_node")
+    builder.add_edge("content_writer_agent_node", "exit_bot_node")
     builder.add_edge("exit_bot_node", END)
 
-    # Add state checkpointing
+
+def compile_graph(builder: StateGraph) -> CompiledStateGraph:
+    """Compiles the graph with checkpointing and store."""
     checkpointer = InMemorySaver()
     in_memory_store = InMemoryStore()
     return builder.compile(checkpointer=checkpointer, store=in_memory_store)
 
 
+def build_graph() -> CompiledStateGraph:
+    """Builds the LangGraph graph."""
+    builder = StateGraph(AgentState)
+    register_nodes(builder)
+    define_edges(builder)
+    return compile_graph(builder)
+
+
 # ========== Entry Point ==========
 
 
-def main():
+def main(
+    file_name_to_save_state: str = "saved_state.json",
+    starting_state_file_path: str = None,
+) -> None:
+    """Main function to run the wiki creation pipeline.
+
+    Args:
+        file_name_to_save_state (str, optional): Name of the file to save the final state.
+            This will be saved in the topic directory. Defaults to "saved_state.json".
+        starting_state_file_path (str, optional): Path to a JSON file containing the
+            starting state. If provided, the pipeline will continue from that state.
+            If not provided, the pipeline will start from scratch. Defaults to None.
+    """
     print("\n📃 Starting wiki creation pipeline...")
     graph = build_graph()
 
     # Get image representation of the graph
     print("\n📊 Generating graph...")
-    graph.get_graph().draw_mermaid_png(output_file_path="wiki_creation_graph.png")
-    print("\t💹 Graph image saved as 'wiki_creation_graph.png'.")
+    graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
+    graph.get_graph().draw_mermaid_png(output_file_path=graph_png_save_path)
+    print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
 
     print("\n🚀 Starting the wiki creation process...")
 
-    # Initialize state with None values for all fields
-    initial_state: AgentState = {
+    starting_state: AgentState = {
         "user_input": None,
         "initial_research": None,
         "deep_research": None,
+        "structure_plan": None,
         "user_preferences": None,
         "retry_count": None,
         "quit": None,
     }
 
-    # Set up config with recursion limit
+    if starting_state_file_path:
+        if not Path(starting_state_file_path).exists():
+            print(
+                f"❗ State file '{starting_state_file_path}' does not exist. Starting with an empty state."
+            )
+        else:
+            print(f"📂 Loading state from '{starting_state_file_path}'...")
+            with open(starting_state_file_path, "r") as f:
+                loaded_state = json.load(f)
+                # Merge loaded state with initial_state to ensure all keys are present
+                starting_state.update(loaded_state)
+            print("\t✅ State loaded successfully.")
+
     config = {"configurable": {"thread_id": "1", "recursion_limit": 200}}
-    final_state: dict = graph.invoke(initial_state, config=config)
+    final_state: dict = graph.invoke(starting_state, config=config)
+
+    if final_state["user_input"] == EXIT_COMMAND:
+        return
+
     print("\t✅ Done.")
 
     # Get directory name from user input (which is our topic)
@@ -419,7 +525,7 @@ def main():
     topic_dir = get_topic_directory_name(topic, create=True)
 
     # Save state in the topic directory
-    output_file = str(Path(topic_dir) / "final_wiki_state.json")
+    output_file = str(Path(topic_dir) / file_name_to_save_state)
 
     # Save final state as JSON with proper formatting
     with open(output_file, "w") as f:
@@ -427,10 +533,14 @@ def main():
 
     print(f"\n📄 Final state saved in topic directory: '{output_file}'.")
 
-    # if "wiki" in final_state:
     print("Printing Final State:")
     print(final_state)
 
 
 if __name__ == "__main__":
-    main()
+    main(
+        file_name_to_save_state="saved_wiki_state.json",
+        # starting_state_file_path=os.path.join(
+        #     OUTPUTS_DIR, "Retrieval_Augmented_Generation", "saved_wiki_state.json"
+        # ),  # Set to a path like os.path.join(OUTPUTS_DIR, "Your_Topic", "saved_wiki_state.json") to load
+    )
