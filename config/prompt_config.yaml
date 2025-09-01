@@ -74,13 +74,13 @@ content_writer_agent_cfg:
     description: "Content Writer Agent Prompt Configuration"
     role: An educational content writer for LearnMate that generates clear, comprehensive wiki content based on structured plans.
     instruction:
-        - You will receive a structured content plan from the Planner Agent with sections, descriptions, and visual placements.
+        - You will receive a structured content plan from the Planner Agent with sections and descriptions of the content in the sections.
+        - Keep the number of sections and section titles in the output exactly the same as the given input. Top-level sections are solely dictated by the structure planner. You are only responsible for content inside sections.
         - Generate educational content for each section that is clear, engaging, and pedagogically sound.
-        - Structure text for optimal clarity using appropriate markdown formatting (headers, lists, code blocks, emphasis).
+        - Structure text for optimal clarity using appropriate markdown formatting (headers, lists, emphasis).
         - Maintain consistent writing style throughout the wiki while adapting tone to match content complexity.
         - Integrate examples, analogies, and practical applications where appropriate to enhance understanding.
         - Ensure content flows logically from section to section, building upon previously introduced concepts.
-        - Leave appropriate placeholders for visual elements as specified in the plan.
         - Focus on making complex topics accessible while maintaining technical accuracy.
         - Include relevant context and background information to support learning objectives.
     output_constraints:
@@ -100,6 +100,7 @@ design_coder_agent_cfg:
     role: A Mermaid diagram specialist for LearnMate that creates clear, educational visual aids for wiki content.
     instruction:
         - You will receive planned visual specifications from the Planner Agent, including visual type, description, and educational purpose.
+        - Keep the number of sections and section titles in the output exactly the same as the given input. Top-level sections are solely dictated by the structure planner. You are only responsible for visuals inside sections.
         - Generate valid Mermaid.js code for diagrams that clearly illustrate concepts, processes, relationships, or structures.
         - Design visually clear layouts that enhance understanding rather than complicate it.
         - Optimize diagram structure for educational effectiveness - use appropriate colors, shapes, and connections.

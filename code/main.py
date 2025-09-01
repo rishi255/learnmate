@@ -19,9 +19,8 @@ from llm import get_llm
 from paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
 from prompt_builder import build_prompt_from_config
 from pydantic import BaseModel, Field
-from pyjokes import get_joke
 from typing_extensions import TypedDict
-from utils import load_config
+from utils import load_config, save_state_checkpoint
 
 # ===================
 # Define Structured Output Classes for Agents
@@ -100,7 +99,9 @@ class PlannedSectionOutput(BaseModel):
     A section title could be a heading, subheading, or any other markdown formatting.
     """
 
-    title: str = Field(description="The title of the section in markdown format.")
+    title: str = Field(
+        description="The title of the section in markdown format. This should always be an H2 starting with 2 hashes (##). "
+    )
     description: str = Field(
         description="A detailed description of the suggested content to be present in the section."
     )
@@ -113,7 +114,9 @@ class PlannedSectionOutput(BaseModel):
 class PlannerOutput(BaseModel):
     """Output from the planner agent that creates a structured plan for the wiki content with sections and visual suggestions, based on the deep research done by the research agent."""
 
-    title: str = Field(description="The title of the wiki page")
+    title: str = Field(
+        description="The title of the wiki page. This should always be an H1 starting with 1 hash (#)."
+    )
     sections: List[PlannedSectionOutput] = Field(
         default_factory=list,
         description="List of sections to be included in the wiki page, each with its own title, description, and visuals.",
@@ -123,19 +126,71 @@ class PlannerOutput(BaseModel):
 class WikiSectionOutput(BaseModel):
     """Represents a section of the generated wiki, excluding visuals."""
 
-    title: str = Field(description="Title of the section")
+    title: str = Field(
+        description="Title of the section. NOTE that this should ALWAYS be the same as the corresponding section in the plan."
+    )
     content: str = Field(
-        description="Full markdown content for this section (text only, no visuals)"
+        description="Full markdown content for this section (text only). This should NOT include any visual elements AT ALL like images, diagrams or tables."
     )
 
 
 class WikiOutput(BaseModel):
     """Structured output for the full wiki (text only, no visuals)."""
 
-    title: str = Field(description="Title of the wiki page")
+    title: str = Field(
+        description="Title of the wiki page. NOTE that this should ALWAYS be the same as the title in the plan."
+    )
     sections: List[WikiSectionOutput] = Field(
         default_factory=list,
-        description="Textual sections for the wiki, one per section in the plan, in order.",
+        description="Textual sections for the wiki, one per section in the plan, in order. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
+    )
+
+
+class CodedVisualOutput(BaseModel):
+    """Represents a visual element that is part of a Wiki Section. This includes the code to generate the visual."""
+
+    title: str = Field(description="Title of the visual element.")
+    visual_type: Literal["mermaid_diagram", "table", "image"] = Field(
+        description="The type of visual element."
+    )
+    code: str = Field(
+        description="""Code to generate the visual element (if applicable). This could be Mermaid code for diagrams, or markdown formatted data for tables.
+        The code should NOT be in a code block, just plain text. The formatting will be handled when rendering the final wiki based on the visual type.
+        For images, this field should be None and the image_path field should be used instead.
+        For tables, ensure the code is valid markdown table syntax.
+        For mermaid diagrams, ensure the code is valid Mermaid syntax and use double quotes for all labels to avoid issues with syntax and parsing due to special characters.
+        """,
+        default=None,
+    )
+    image_path: str = Field(
+        description="Path to the image file (if applicable).",
+        default=None,
+    )
+
+
+class CodedVisualSectionOutput(BaseModel):
+    """
+    Represents a section of the generated wiki that contains visual elements.
+    """
+
+    title: str = Field(
+        description="Title of the section. NOTE that this should ALWAYS be the same as the corresponding section in the wiki text."
+    )
+    visuals: List[CodedVisualOutput] = Field(
+        default_factory=list,
+        description="List of visual elements related to the section.",
+    )
+
+
+class DesignCoderOutput(BaseModel):
+    """Structured output for the design coding process."""
+
+    title: str = Field(
+        description="The title of the wiki page. NOTE that this should ALWAYS be the same as the title in the plan."
+    )
+    sections: List[CodedVisualSectionOutput] = Field(
+        default_factory=list,
+        description="List of sections to be included in the wiki page, each with its own title and visuals. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
     )
 
 
@@ -147,6 +202,8 @@ STATE_KEY_MAP = OrderedDict(
         "deep_research": ("research_agent_node", DeepResearchOutput),
         "structure_plan": ("planner_agent_node", PlannerOutput),
         "wiki_content": ("content_writer_agent_node", WikiOutput),
+        "design_code": ("design_coder_agent_node", DesignCoderOutput),
+        "final_wiki_path": ("merge_wiki_and_visuals_node", str),
     }
 )
 
@@ -162,6 +219,11 @@ class AgentState(TypedDict):
     initial_research: dict | None  # Output from initial research phase
     deep_research: dict | None  # Output from deep research phase
     structure_plan: dict | None  # Output from planner agent
+    wiki_content: dict | None  # Generated wiki content (text only)
+    design_code: dict | None  # Generated design code (e.g. Mermaid diagrams and tables)
+    final_wiki_path: (
+        str | None
+    )  # Path to the final merged wiki file after merging text and visuals
     user_preferences: dict | None  # User preferences for the topic
     retry_count: int | None
     quit: bool | None  # Whether to exit the bot
@@ -222,7 +284,16 @@ def get_user_input_node(state: AgentState) -> dict:
         "Enter the topic you want to create a wiki for (or type 'exit' to quit): "
     ).strip()
 
-    return {"user_input": user_input}
+    # Create result state
+    result = {"user_input": user_input}
+
+    # Save checkpoint if not exiting
+    if user_input.lower() != EXIT_COMMAND:
+        topic_dir = get_topic_directory_name(user_input)
+        save_state_checkpoint({**state, **result}, topic_dir)
+        print("🔄 User input node completed - State checkpoint saved")
+
+    return result
 
 
 def route_choice(
@@ -303,6 +374,8 @@ def research_agent_node(state: AgentState) -> dict:
     then searches each key concept for detailed understanding.
     Returns initial and deep research results in structured format.
     """
+    # TODO: Change structure by binding search tools, to let the LLM choose what parts to deep dive into.
+
     # Check if initial_research is already populated
     if state.get("initial_research"):
         print("✅ Initial research is already populated. Skipping research node.")
@@ -347,10 +420,17 @@ def research_agent_node(state: AgentState) -> dict:
         DeepResearchOutput
     ).invoke(deep_prompt)
 
-    return {
+    result = {
         "initial_research": initial_response.model_dump(),
         "deep_research": deep_response.model_dump(),
     }
+
+    # Save checkpoint
+    topic_dir = get_topic_directory_name(state["user_input"])
+    save_state_checkpoint({**state, **result}, topic_dir)
+    print("🔄 Research agent node completed - State checkpoint saved")
+
+    return result
 
 
 def planner_agent_node(state: AgentState) -> dict:
@@ -373,9 +453,16 @@ def planner_agent_node(state: AgentState) -> dict:
         planner_prompt
     )
 
-    return {
+    result = {
         "structure_plan": planner_response.model_dump(),
     }
+
+    # Save checkpoint
+    topic_dir = get_topic_directory_name(state["user_input"])
+    save_state_checkpoint({**state, **result}, topic_dir)
+    print("🔄 Planner agent node completed - State checkpoint saved")
+
+    return result
 
 
 def content_writer_agent_node(state: AgentState) -> dict:
@@ -387,6 +474,10 @@ def content_writer_agent_node(state: AgentState) -> dict:
 
     content_llm = get_llm(app_cfg["content_writer_model_llm"], temperature=0.3)
     structure_plan: PlannerOutput = state["structure_plan"]
+
+    # strip the visual planning so that the content writer does not get confused
+    for section in structure_plan["sections"]:
+        section["visuals"] = []
 
     # Build a single prompt for the entire plan (all sections)
     full_plan_prompt = build_prompt_from_config(
@@ -400,26 +491,137 @@ def content_writer_agent_node(state: AgentState) -> dict:
         full_plan_prompt
     )
 
-    # Convert structured output to markdown (text only)
-    wiki_content = f"# {wiki_output.title}\n\n"
-    for section in wiki_output.sections:
-        wiki_content += f"{section.title}\n{section.content}\n\n"
+    # # Convert structured output to markdown (text only)
+    # wiki_content = f"# {wiki_output.title}\n\n"
+    # for section in wiki_output.sections:
+    #     wiki_content += f"{section.title}\n{section.content}\n\n"
+
+    # topic = get_cleaned_topic_name(state["user_input"])
+    # topic_dir = get_topic_directory_name(topic, create=True)
+    # output_file = str(Path(topic_dir) / "generated_wiki_content.md")
+
+    result = {"wiki_content": wiki_output.model_dump()}
+
+    # Save checkpoint
+    topic_dir = get_topic_directory_name(state["user_input"])
+    save_state_checkpoint({**state, **result}, topic_dir)
+    print("� Content writer node completed - State checkpoint saved")
+
+    return result
+
+
+def design_coder_agent_node(state: AgentState) -> dict:
+    """Design coder agent - generates Mermaid diagrams for the wiki based on the planner's visual suggestions."""
+
+    if state.get("design_code"):
+        print("✅ Visual content already generated. Skipping design coder agent node.")
+        return {}
+
+    design_llm = get_llm(app_cfg["design_coder_model_llm"], temperature=0.2)
+    structure_plan: PlannerOutput = state["structure_plan"]
+
+    # Build prompt for diagrams generation from planner's specification
+    visual_prompt = build_prompt_from_config(
+        prompt_cfg["design_coder_agent_cfg"],
+        app_config=app_cfg,
+        input_data=repr(structure_plan),
+    )
+
+    design_output: DesignCoderOutput = design_llm.with_structured_output(
+        DesignCoderOutput
+    ).invoke(visual_prompt)
 
     topic = get_cleaned_topic_name(state["user_input"])
     topic_dir = get_topic_directory_name(topic, create=True)
-    output_file = str(Path(topic_dir) / "generated_wiki_content.md")
+    output_file = str(Path(topic_dir) / "generated_wiki_visuals.md")
+
+    # with open(output_file, "w") as f:
+    #     for section in design_output.sections:
+
+    result = {"design_code": design_output.model_dump()}
+
+    # Save checkpoint
+    topic_dir = get_topic_directory_name(state["user_input"])
+    save_state_checkpoint({**state, **result}, topic_dir)
+    print("🔄 Design coder node completed - State checkpoint saved")
+
+    return result
+
+
+def merge_wiki_and_visuals_node(state: AgentState) -> dict:
+    """Merges the wiki content and visual code into a single markdown file."""
+    if not state.get("wiki_content") or not state.get("design_code"):
+        print("❌ Cannot merge wiki and visuals. Missing content.")
+        return {}
+
+    if state.get("final_wiki_path"):
+        print("✅ Final wiki with visuals already created. Skipping merge node.")
+        return {}
+
+    topic = get_cleaned_topic_name(state["user_input"])
+    topic_dir = get_topic_directory_name(topic, create=True)
+    output_file = str(Path(topic_dir) / "complete_wiki.md")
+
+    wiki_output = state["wiki_content"]
+    design_code = state["design_code"]
+
+    assert len(wiki_output["sections"]) == len(design_code["sections"]), (
+        "Number of sections in wiki content and design code do not match."
+        f" Wiki sections: {len(wiki_output['sections'])}, Design sections: {len(design_code['sections'])}"
+    )
+
+    assert all(
+        wiki_output["sections"][i]["title"] == design_code["sections"][i]["title"]
+        for i in range(len(wiki_output["sections"]))
+    ), (
+        "Section titles in wiki content and design code do not match."
+        f"Wiki section titles: {[section['title'] for section in wiki_output['sections']]}, "
+        f"Design section titles: {[section['title'] for section in design_code['sections']]}"
+    )
+
+    # Simple merge logic: Append visuals at the end of the wiki content
+
+    merged_content = f"# {wiki_output['title']}\n\n"
+    for visual_section, content_section in zip(
+        design_code["sections"], wiki_output["sections"]
+    ):
+        merged_content += (
+            f"{content_section['title']}\n{content_section['content']}\n\n"
+        )
+        for visual in visual_section["visuals"]:
+            if visual["visual_type"] == "image":
+                if (
+                    not visual.get("image_path")
+                    or not Path(visual["image_path"]).exists()
+                ):
+                    print(
+                        f"❗ Image path '{visual.get('image_path')}' does not exist. Skipping image."
+                    )
+                    continue
+                merged_content += f"![{visual['title']}]({visual['image_path']})\n\n"
+            else:
+                if not visual.get("code"):
+                    print(
+                        f"❗ No code provided for {visual['visual_type']} titled '{visual['title']}'. Skipping."
+                    )
+                    continue
+                if visual["visual_type"] == "mermaid_diagram":
+                    merged_content += f"```mermaid\n{visual['code']}\n```\n\n"
+                else:
+                    merged_content += f"{visual['code']}\n\n"
 
     with open(output_file, "w") as f:
-        f.write(wiki_content)
+        f.write(merged_content)
 
-    print(f"📄 Wiki content generated and saved to: {output_file}")
-    return {"wiki_content": wiki_content}
+    result = {"final_wiki_path": output_file}
 
+    # Save checkpoint
+    topic_dir = get_topic_directory_name(state["user_input"])
+    save_state_checkpoint({**state, **result}, topic_dir)
+    print("🔄 Merge node completed - State checkpoint saved")
+    print(f"📄 Complete wiki with visuals saved to: {output_file}")
 
-# TODO: Implement Design Coder Agent
-def design_coder_agent_node(state: AgentState) -> dict:
-    """Design coder agent - creates Mermaid diagrams for the wiki based on the planner's visual suggestions."""
-    pass
+    return result
 
 
 # ========== Graph Assembly ==========
@@ -437,9 +639,18 @@ def define_edges(builder: StateGraph) -> None:
     builder.set_entry_point("get_user_input_node")
     builder.add_conditional_edges("get_user_input_node", route_choice)
     builder.add_edge("research_agent_node", "planner_agent_node")
+
+    # Parallelize content writing and design coding
+
+    ## fan-out
     builder.add_edge("planner_agent_node", "content_writer_agent_node")
-    # builder.add_edge("content_writer_agent_node", "design_coder_agent_node")
-    builder.add_edge("content_writer_agent_node", "exit_bot_node")
+    builder.add_edge("planner_agent_node", "design_coder_agent_node")
+
+    ## fan-in
+    builder.add_edge("content_writer_agent_node", "merge_wiki_and_visuals_node")
+    builder.add_edge("design_coder_agent_node", "merge_wiki_and_visuals_node")
+
+    builder.add_edge("merge_wiki_and_visuals_node", "exit_bot_node")
     builder.add_edge("exit_bot_node", END)
 
 
@@ -490,6 +701,9 @@ def main(
         "initial_research": None,
         "deep_research": None,
         "structure_plan": None,
+        "wiki_content": None,
+        "design_code": None,
+        "final_wiki_path": None,
         "user_preferences": None,
         "retry_count": None,
         "quit": None,
@@ -538,9 +752,20 @@ def main(
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Generate a wiki on any topic with automatic visuals."
+    )
+    parser.add_argument(
+        "--state",
+        type=str,
+        help="Path to a saved state file to resume from",
+        required=False,
+    )
+    args = parser.parse_args()
+
     main(
         file_name_to_save_state="saved_wiki_state.json",
-        # starting_state_file_path=os.path.join(
-        #     OUTPUTS_DIR, "Retrieval_Augmented_Generation", "saved_wiki_state.json"
-        # ),  # Set to a path like os.path.join(OUTPUTS_DIR, "Your_Topic", "saved_wiki_state.json") to load
+        starting_state_file_path=args.state,
     )
