@@ -24,67 +24,130 @@ A student/professional/enthusiast who:
 ### 1. **Research Agent**
 
 - **Input**: Topic from user
-- **Functions**:
-  - Performs comprehensive web search
-  - Extracts key subtopics and concepts
-  - Identifies visualization opportunities
-  - Gathers reliable source material
-- **Output**: Research data with source citations
+- **Functions** (Two-Phase Research):
+  - **Initial Research Phase**:
+    - Performs initial web search for overview
+    - Identifies topic category and key concepts
+    - Creates initial summary
+    - Gathers reliable source URLs
+  - **Deep Research Phase**:
+    - Conducts detailed research on each key concept
+    - Extracts comprehensive subtopics
+    - Identifies visualization opportunities
+    - Builds upon initial research findings
+- **Output**: 
+  - Initial Research: Title, topic, category, summary, key concepts, sources
+  - Deep Research: Detailed subtopics, visual suggestions
 
 ### 2. **Planner Agent**
 
-- **Input**: Research results
+- **Input**: Deep research results (subtopics and visual suggestions)
 - **Functions**:
-  - Creates logical content structure
+  - Creates logical content structure with H1/H2 headers
   - Plans section layout and flow
-  - Identifies visual aid placement
-  - Distributes content between text and diagrams
-- **Output**: Content plan and visual requirements
+  - Designs comprehensive section structure
+  - Maps visual suggestions to specific sections
+  - Specifies visual types (mermaid_diagram, table, image)
+- **Output**: 
+  - Title (H1)
+  - Structured sections list
+  - Each section includes:
+    - Title (H2)
+    - Content description
+    - Planned visuals with types and descriptions
 
 ### 3a. **Content Writer Agent** _(Parallel Path 1)_
 
-- **Input**: Content plan (entire structure) from Planner
+- **Input**: Complete structure plan from Planner
 - **Functions**:
-  - Invokes LLM once per complete structure plan (not per section)
-  - Generates comprehensive educational content covering all sections
-  - Structures text for clarity
-  - Maintains consistent style
-  - Integrates examples
-  - **Does not generate visual aid content**
-- **Output**: Draft content (text-only, no visuals) for validation
+  - Single LLM call for entire content generation
+  - Creates structured text content for all sections
+  - Maintains section hierarchy and order
+  - Excludes all visual elements
+  - Ensures content aligns with planned structure
+- **Output**: 
+  - Wiki title
+  - Ordered list of sections with:
+    - Section title (matching plan)
+    - Full markdown content (text-only)
 
-### 3b. **Visual Writer Agent** _(Parallel Path 2)_
+### 3b. **Design Coder Agent** _(Parallel Path 2)_
 
-- **Input**: Visual requirements from Planner
+- **Input**: Structure plan with visual requirements
 - **Functions**:
-  - Creates Mermaid.js diagrams and other visuals as needed
-  - Designs clear visual layouts
-  - Optimizes diagram structure
-- **Output**: Draft diagrams and visuals for validation
+  - Generates actual visual implementations
+  - Creates Mermaid diagrams with proper syntax
+  - Formats tables in markdown
+  - Handles image references
+  - Uses double quotes for Mermaid labels
+- **Output**: 
+  - Title (matching plan)
+  - Sections list with:
+    - Section title
+    - List of visuals including:
+      - Visual title
+      - Visual type
+      - Generated code/content
+      - Image paths (if applicable)
 
-### 4a. **Content Validator**
+### 4. **Future Validation Layer** _(Planned)_
 
-- **Input**: Draft content
-- **Functions**:
-  - Verifies accuracy
-  - Checks completeness
-  - Ensures clarity
-  - Provides feedback loop to Content Writer
-- **Output**: Validated content or revision requests
+#### Content Validator
+- **Status**: Not yet implemented
+- **Purpose**: Ensure content quality and accuracy
+- **Planned Features**:
+  - Content accuracy verification
+  - Completeness checks
+  - Clarity assessment
+  - Feedback loop to Content Writer
 
-### 4b. **Mermaid Validator**
+#### Mermaid Validator
+- **Status**: Basic structure in place
+- **Purpose**: Ensure visual element validity
+- **Current Features**:
+  - Basic syntax validation structure
+- **Planned Features**:
+  - Full syntax validation
+  - Visual clarity checks
+  - Diagram effectiveness assessment
+  - Feedback loop to Design Coder
 
-- **Input**: Draft diagrams
-- **Functions**:
-  - Validates diagram syntax
-  - Checks visual clarity
-  - Ensures diagram usefulness
-  - Provides feedback loop to Mermaid Generator
-- **Output**: Validated diagrams or revision requests
+### State Management & Checkpointing
 
-### Parallel Processing Note
+The system uses an advanced state management system with automatic checkpointing:
 
-Paths 3a+4a and 3b+4b run in parallel for efficiency
+1. **State Storage**
+   - All state stored using basic Python types (dict, list, str, etc.)
+   - Pydantic models used only for validation during agent calls
+   - Automatic JSON serialization for checkpoints
+   - State saved after each successful node execution
+
+2. **State Components**
+   - `user_input`: Initial topic from user
+   - `initial_research`: Basic topic research
+   - `deep_research`: Detailed concept exploration
+   - `structure_plan`: Content and visual planning
+   - `wiki_content`: Generated textual content
+   - `design_code`: Generated visual elements
+   - `final_wiki_path`: Path to merged output
+   - Additional metadata (user preferences, retry count, etc.)
+
+3. **Checkpoint Mechanism**
+   - Location: `outputs/[Topic_Name]/saved_wiki_state.json`
+   - Updated after each successful node execution
+   - Preserves state even if execution is interrupted
+   - Enables resumption from last successful node
+   - Console progress updates for monitoring
+
+4. **State Flow**
+   - Ordered mapping of state keys to nodes
+   - Clear progression through pipeline stages
+   - Automatic state inspection and saving
+   - Recovery from interruptions
+
+### Parallel Processing
+
+Content generation and visual design run in parallel for efficiency
 
 ---
 
@@ -130,7 +193,7 @@ Paths 3a+4a and 3b+4b run in parallel for efficiency
 | Export Wiki as PDF           | Easy sharing and offline access            |
 | Multiple diagram styles      | Support for more visual formats            |
 | Custom diagram themes        | Consistent visual styling                  |
-| LLM-RAG integration         | Better content grounding via external PDFs |
+| LLM-RAG integration          | Better content grounding via external PDFs |
 
 ---
 
@@ -140,3 +203,86 @@ Paths 3a+4a and 3b+4b run in parallel for efficiency
 -   "How Git Internally Works"
 -   "Basics of Prompt Engineering"
 -   "Data Warehousing vs Data Lakes"
+
+---
+
+## 📂 Project Folder Structure
+
+```
+learnmate/
+├── LICENSE                     # Project license
+├── pyproject.toml             # Python packaging and dependency configuration
+├── uv.lock                    # Dependency lock file
+├── wiki_creation_graph.png    # Current graph visualization
+├── README.md                  # Project overview
+├── code/                      # Main application and supporting modules
+│   ├── __init__.py            # Package initialization
+│   ├── llm.py                 # LLM configuration and setup
+│   ├── main.py                # Core pipeline implementation
+│   ├── main_joke.py           # Example implementation
+│   ├── paths.py               # Path configuration
+│   ├── prompt_builder.py      # Prompt construction utilities
+│   ├── utils.py               # Shared utilities
+├── config/
+│   ├── config.yaml            # System configuration
+│   ├── prompt_config.yaml     # Agent prompts and templates
+├── documentation/
+│   ├── design.md              # Architecture and design documentation
+│   ├── multi_agent_design_flowchart.mmd  # Architecture diagram source
+│   ├── multi_agent_design_flowchart.png  # Rendered architecture diagram
+├── outputs/                   # Generated wiki content
+    ├── [Topic_Name]/          # Topic-specific outputs
+        ├── complete_wiki.md    # Final merged wiki content
+        ├── saved_wiki_state.json # Serialized state for resumption
+```
+
+---
+
+## 🏃 Usage
+
+### Prerequisites
+
+- Python 3.x installed as per `pyproject.toml`
+- Dependencies installed using your preferred package manager
+- Environment variables set (if required)
+
+### Running the Wiki Generator
+
+From the repository root:
+
+```bash
+python code/main.py
+```
+
+This starts the CLI-based wiki generation pipeline.
+
+### State Management & Checkpointing
+
+- Each run creates a `saved_wiki_state.json` in the topic's output directory
+- State includes:
+  - Research findings
+  - Generated content
+  - Visual elements
+  - Progress tracking
+- To resume from a checkpoint:
+  1. Locate the saved state JSON
+  2. Pass it as input to start from that point
+
+### Configuration
+
+- System settings: `config/config.yaml`
+- Agent prompts: `config/prompt_config.yaml`
+- All settings can be adjusted before running
+
+### Output Structure
+
+- Generated content goes to `outputs/[Topic_Name]/`
+- Files created:
+  - `complete_wiki.md`: Final merged wiki
+  - `saved_wiki_state.json`: Checkpoint data
+  
+### Notes
+
+- CLI interface only (Streamlit UI planned)
+- Uses LangGraph for state management
+- Supports parallel content/visual generation

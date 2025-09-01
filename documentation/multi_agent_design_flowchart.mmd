@@ -3,36 +3,47 @@ config:
   layout: dagre
 ---
 flowchart TD
- subgraph B["**Research Agent**"]
-        B1["**Tool 1**: Web Search<br><i>Initial topic search</i>"]
-        B2["**LLM Call 1**:<br><i>Initial Research:<br>Scope &amp; Subtopics</i>"]
-        B3["**LLM Call 2**:<br><i>Deep Research:<br>Detailed Analysis &amp; Visualization Needs</i>"]
-  end
- subgraph P["**Content Planner Agent**"]
-        P1["**LLM Call 3**:<br><i>Structure Layout:<br>Sections &amp; Flow</i>"]
-        P2["**LLM Call 4**:<br><i>Resource Planning:<br>Content &amp; Visual Distribution</i>"]
-  end
- subgraph ContentPath["Content Generation"]
-        C["**Content Writer Agent**"]
-        CV["**Content Validator Agent**"]
-  end
- subgraph VisualPath["Visuals Generation"]
-        M["**Mermaid Generator Agent**"]
-        MV["**Mermaid Validator Tool**"]
-  end
-    A["User Input: Topic"] --> B
-    B1 --> B2
-    B2 --> B3
-    P1 --> P2
-    C --> CV
-    CV -- Feedback --> C
-    M --> MV
-    MV -- Feedback --> M
-    B --> P
+     %% Main Flow
+    start([start]) --> A["User Input Node<br><i>Get Topic</i>"]
+    A --> B["Research Agent"]
+    
+    %% Research Agent
+    subgraph B["Research Agent"]
+        direction TB
+        B1["Initial Research<br><i>Web Search & Overview</i>"] --> B2["Deep Research<br><i>Key Concepts & Visuals</i>"]
+    end
+    B --> P["Planner Agent"]
+
+    %% Planner Agent
+    subgraph P["Planner Agent"]
+        P1["Structure Planning<br><i>Sections & Visuals</i>"]
+    end
+
+    %% Parallel Paths
     P --> ContentPath & VisualPath
-    CV --> F["Final Content"]
-    MV --> F
-    style CV fill:#ffe6e6,stroke:#333
-    style MV fill:#ffe6e6,stroke:#333
+
+    %% Content Generation Path
+    subgraph ContentPath["Content Generation"]
+        C["Content Writer Agent"] --> CV["Content Validator<br><i>(Future)</i>"]
+        CV -..-> |Feedback| C
+    end
+
+    %% Visual Generation Path
+    subgraph VisualPath["Visuals Generation"]
+        M["Design Coder Agent"] --> MV["Mermaid Validator<br><i>(Future)</i>"]
+        MV -..-> |Feedback| M
+    end
+
+    %% Merge and Finalize
+    ContentPath & VisualPath --> merge["Merge Node<br><i>Combine Content & Visuals</i>"]
+
+    merge --> exit["Exit Node"]
+    exit --> endnode([end])
+
+    %% Styling
+    classDef future fill:#ffe6e6,stroke:#333
+    classDef state fill:#e6ffe6,stroke:#333,stroke-dasharray: 5 5
+    class CV,MV future
+    class save1,save2,save3,save4a,save4b,save5 state
     style ContentPath fill:#f5f0ff,stroke:#333
     style VisualPath fill:#f0f5ff,stroke:#333
