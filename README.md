@@ -78,14 +78,14 @@ Never lose your progress! The system automatically saves your work:
 
 What's ready and what's cooking:
 
-#### Available Now ✨
+### Available Now ✨
 
 - 🎯 Smart Research & Planning
 - 📝 Dynamic Content Generation
 - 🎨 Visual Generation
 - 💾 State Management
 
-#### On the Horizon 🌅
+### On the Horizon 🌅
 
 - 🔍 Advanced Validation Layer
 - 🌐 Web Interface with Streamlit

@@ -35,7 +35,7 @@ A student/professional/enthusiast who:
     - Extracts comprehensive subtopics
     - Identifies visualization opportunities
     - Builds upon initial research findings
-- **Output**: 
+- **Output**:
   - Initial Research: Title, topic, category, summary, key concepts, sources
   - Deep Research: Detailed subtopics, visual suggestions
 
@@ -48,7 +48,7 @@ A student/professional/enthusiast who:
   - Designs comprehensive section structure
   - Maps visual suggestions to specific sections
   - Specifies visual types (mermaid_diagram, table, image)
-- **Output**: 
+- **Output**:
   - Title (H1)
   - Structured sections list
   - Each section includes:
@@ -65,7 +65,7 @@ A student/professional/enthusiast who:
   - Maintains section hierarchy and order
   - Excludes all visual elements
   - Ensures content aligns with planned structure
-- **Output**: 
+- **Output**:
   - Wiki title
   - Ordered list of sections with:
     - Section title (matching plan)
@@ -80,7 +80,7 @@ A student/professional/enthusiast who:
   - Formats tables in markdown
   - Handles image references
   - Uses double quotes for Mermaid labels
-- **Output**: 
+- **Output**:
   - Title (matching plan)
   - Sections list with:
     - Section title
@@ -93,6 +93,7 @@ A student/professional/enthusiast who:
 ### 4. **Future Validation Layer** _(Planned)_
 
 #### Content Validator
+
 - **Status**: Not yet implemented
 - **Purpose**: Ensure content quality and accuracy
 - **Planned Features**:
@@ -102,6 +103,7 @@ A student/professional/enthusiast who:
   - Feedback loop to Content Writer
 
 #### Mermaid Validator
+
 - **Status**: Basic structure in place
 - **Purpose**: Ensure visual element validity
 - **Current Features**:
@@ -136,14 +138,26 @@ The system uses an advanced state management system with automatic checkpointing
    - Location: `outputs/[Topic_Name]/saved_wiki_state.json`
    - Updated after each successful node execution
    - Preserves state even if execution is interrupted
-   - Enables resumption from last successful node
+   - Enables resumption from last successful node (basically any saved state file) via `--state` argument
    - Console progress updates for monitoring
+   - Usage: `python code/main.py --state outputs/Your_Topic/saved_wiki_state.json`
 
-4. **State Flow**
+4. **State Flow & Dependencies**
    - Ordered mapping of state keys to nodes
-   - Clear progression through pipeline stages
+   - Sequential dependency chain:
+
+     ```
+     user_input → initial_research → deep_research 
+    
+                         ┌─ wiki_content ─┐
+     → structure_plan →  |                |  → final_wiki_path
+                         └─ design_code ──┘
+     ```
+
+   - Each state key requires all previous keys in the chain
+   - Manual state edits must preserve this dependency order
    - Automatic state inspection and saving
-   - Recovery from interruptions
+   - Recovery from interruptions at any node
 
 ### Parallel Processing
 
@@ -254,7 +268,7 @@ python code/main.py
 
 This starts the CLI-based wiki generation pipeline.
 
-### State Management & Checkpointing
+### Runtime State Management
 
 - Each run creates a `saved_wiki_state.json` in the topic's output directory
 - State includes:
@@ -264,7 +278,7 @@ This starts the CLI-based wiki generation pipeline.
   - Progress tracking
 - To resume from a checkpoint:
   1. Locate the saved state JSON
-  2. Pass it as input to start from that point
+  2. Run with `--state` argument: `python code/main.py --state outputs/Your_Topic/saved_wiki_state.json`
 
 ### Configuration
 
