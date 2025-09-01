@@ -151,7 +151,7 @@ Content generation and visual design run in parallel for efficiency
 
 ---
 
-## 🌐 User Interface: **Streamlit Frontend**
+## 🌐 User Interface: **Streamlit Frontend** (Planned for Future)
 
 ### 📌 Layout Overview
 
@@ -161,9 +161,7 @@ Content generation and visual design run in parallel for efficiency
 | **“Generate Wiki” Button** | Triggers the agent pipeline                              |
 | **Generated Wiki Viewer**  | Displays structured output with expandable sections      |
 | **Diagrams & Images**      | Renders inline visuals using DALL·E or Mermaid           |
-| **Tutor Chat Area**        | Simulated back-and-forth tutor dialog                    |
-| **Progress Tracker**       | Visual indicator of user’s learning journey              |
-| **Feedback Box**           | User gives optional feedback or asks to revisit sections |
+| **Feedback Box**           | User gives optional feedback to edit the generated wiki  |
 
 ### Streamlit Features Used
 
@@ -177,8 +175,8 @@ Content generation and visual design run in parallel for efficiency
 
 ## ✅ MVP
 
-- Topic Input → Generates a 3–4 section visual wiki
-- At least 1 Mermaid diagram per section
+- Topic Input → Generates a visual wiki with at least 5-6 sections in detail
+- At least 3-4 visuals (Mermaid diagram, table or image) throughout
 - Streamlit UI showing:  
   - Wiki content with expandable sections
   - Visuals with Mermaid diagrams
@@ -243,7 +241,7 @@ learnmate/
 ### Prerequisites
 
 - Python 3.x installed as per `pyproject.toml`
-- Dependencies installed using your preferred package manager
+- Dependencies installed using your preferred package manager (`uv` is recommended - `uv sync` or `pip install -r requirements.txt`
 - Environment variables set (if required)
 
 ### Running the Wiki Generator
