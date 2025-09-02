@@ -1,26 +1,22 @@
 import json
-import os
 from collections import OrderedDict
-from operator import add
 from pathlib import Path
-from typing import Annotated, List, Literal
+from typing import List, Literal, Optional
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from langchain_core.tools import tool  # Import the tool decorator
-
-# from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_tavily import TavilySearch
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.store.memory import InMemoryStore
-from llm import get_llm
-from paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
-from prompt_builder import build_prompt_from_config
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
-from utils import load_config, save_state_checkpoint
+
+# Local imports
+from backend.llm import get_llm
+from backend.paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
+from backend.prompt_builder import build_prompt_from_config
+from backend.utils import load_config, save_state_checkpoint
 
 # ===================
 # Define Structured Output Classes for Agents
@@ -197,7 +193,6 @@ class DesignCoderOutput(BaseModel):
 # Mapping state keys to node names and their expected output types.
 STATE_KEY_MAP = OrderedDict(
     {
-        "user_input": ("get_user_input_node", str),
         "initial_research": ("research_agent_node", InitialResearchOutput),
         "deep_research": ("research_agent_node", DeepResearchOutput),
         "structure_plan": ("planner_agent_node", PlannerOutput),
@@ -631,27 +626,21 @@ def register_nodes(builder: StateGraph) -> None:
     """Registers all nodes in the graph."""
     for node_name in set([x[0] for x in STATE_KEY_MAP.values()]):
         builder.add_node(node_name, globals()[node_name])
-    builder.add_node("exit_bot_node", exit_bot_node)
 
 
 def define_edges(builder: StateGraph) -> None:
     """Defines the edges of the graph."""
-    builder.set_entry_point("get_user_input_node")
-    builder.add_conditional_edges("get_user_input_node", route_choice)
+    builder.set_entry_point("research_agent_node")  # Start directly with research
     builder.add_edge("research_agent_node", "planner_agent_node")
 
     # Parallelize content writing and design coding
-
-    ## fan-out
     builder.add_edge("planner_agent_node", "content_writer_agent_node")
     builder.add_edge("planner_agent_node", "design_coder_agent_node")
 
-    ## fan-in
+    # Merge results and end
     builder.add_edge("content_writer_agent_node", "merge_wiki_and_visuals_node")
     builder.add_edge("design_coder_agent_node", "merge_wiki_and_visuals_node")
-
-    builder.add_edge("merge_wiki_and_visuals_node", "exit_bot_node")
-    builder.add_edge("exit_bot_node", END)
+    builder.add_edge("merge_wiki_and_visuals_node", END)
 
 
 def compile_graph(builder: StateGraph) -> CompiledStateGraph:
@@ -673,17 +662,21 @@ def build_graph() -> CompiledStateGraph:
 
 
 def main(
-    file_name_to_save_state: str = "saved_state.json",
-    starting_state_file_path: str = None,
-) -> None:
-    """Main function to run the wiki creation pipeline.
+    user_input: str,
+    file_name_to_save_state: str = "saved_wiki_state.json",
+    starting_state_file_path: Optional[str] = None,
+) -> str:
+    """Main function to run the wiki creation pipeline. The provided topic will be cleaned
+    (removing special characters and replacing spaces with underscores) and used to create
+    a directory for storing outputs.
 
     Args:
-        file_name_to_save_state (str, optional): Name of the file to save the final state.
-            This will be saved in the topic directory. Defaults to "saved_state.json".
-        starting_state_file_path (str, optional): Path to a JSON file containing the
-            starting state. If provided, the pipeline will continue from that state.
-            If not provided, the pipeline will start from scratch. Defaults to None.
+        topic: The topic to create a wiki for. Will be cleaned for filesystem compatibility.
+        file_name_to_save_state: Name of the file to save the final state
+        starting_state_file_path: Path to a JSON file containing the starting state
+
+    Returns:
+        str: Path to the generated wiki file
     """
     print("\n📃 Starting wiki creation pipeline...")
     graph = build_graph()
@@ -691,13 +684,18 @@ def main(
     # Get image representation of the graph
     print("\n📊 Generating graph...")
     graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
-    graph.get_graph().draw_mermaid_png(output_file_path=graph_png_save_path)
+    graph.get_graph().draw_mermaid_png(
+        output_file_path=graph_png_save_path,
+        # draw_method=MermaidDrawMethod.PYPPETEER,
+        # max_retries=5,
+        # retry_delay=2.0,
+    )
     print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
 
     print("\n🚀 Starting the wiki creation process...")
 
     starting_state: AgentState = {
-        "user_input": None,
+        "user_input": user_input,  # Initialize with exact user input, not cleaned to give the research agent the exact input
         "initial_research": None,
         "deep_research": None,
         "structure_plan": None,
@@ -710,45 +708,40 @@ def main(
     }
 
     if starting_state_file_path:
+        # If state file was requested but doesn't exist, return early
         if not Path(starting_state_file_path).exists():
-            print(
-                f"❗ State file '{starting_state_file_path}' does not exist. Starting with an empty state."
-            )
-        else:
-            print(f"📂 Loading state from '{starting_state_file_path}'...")
-            with open(starting_state_file_path, "r") as f:
-                loaded_state = json.load(f)
-                # Merge loaded state with initial_state to ensure all keys are present
-                starting_state.update(loaded_state)
-            print("\t✅ State loaded successfully.")
+            print(f"❗ State file '{starting_state_file_path}' does not exist.")
+            return None
+        
+        print(f"📂 Loading state from '{starting_state_file_path}'...")
+        with open(starting_state_file_path, "r") as f:
+            loaded_state = json.load(f)
+            # Merge loaded state with initial_state to ensure all keys are present
+            starting_state.update(loaded_state)
+        print("\t✅ State loaded successfully.")
+
+        # load topic from state
+        user_input = starting_state.get("user_input")
+
+    if user_input and user_input.lower() == EXIT_COMMAND:
+        return  # exit early if the topic is the exit command
+
+    # Clean topic name and create directory
+    cleaned_topic = get_cleaned_topic_name(user_input)
+    topic_dir = get_topic_directory_name(cleaned_topic, create=True)
 
     config = {"configurable": {"thread_id": "1", "recursion_limit": 200}}
     final_state: dict = graph.invoke(starting_state, config=config)
 
-    if final_state["user_input"] == EXIT_COMMAND:
-        return
-
-    print("\t✅ Done.")
-
-    # Get directory name from user input (which is our topic)
-    topic = (
-        get_cleaned_topic_name(final_state["user_input"])
-        if final_state.get("user_input")
-        else "default"
-    )
-    topic_dir = get_topic_directory_name(topic, create=True)
-
-    # Save state in the topic directory
-    output_file = str(Path(topic_dir) / file_name_to_save_state)
-
-    # Save final state as JSON with proper formatting
-    with open(output_file, "w") as f:
+    # Directory was already created at the start, just use it
+    state_file = Path(topic_dir) / file_name_to_save_state
+    with open(state_file, "w") as f:
         json.dump(final_state, f, indent=4)
 
-    print(f"\n📄 Final state saved in topic directory: '{output_file}'.")
+    print(f"\n📄 Final state saved in topic directory: '{state_file}'")
 
-    print("Printing Final State:")
-    print(final_state)
+    # Return the path to the generated wiki file
+    return final_state.get("final_wiki_path")
 
 
 if __name__ == "__main__":
@@ -758,6 +751,11 @@ if __name__ == "__main__":
         description="Generate a wiki on any topic with automatic visuals."
     )
     parser.add_argument(
+        "topic",
+        type=str,
+        help="The topic to create a wiki for",
+    )
+    parser.add_argument(
         "--state",
         type=str,
         help="Path to a saved state file to resume from",
@@ -765,7 +763,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    main(
+    wiki_path = main(
+        user_input=args.topic,
         file_name_to_save_state="saved_wiki_state.json",
         starting_state_file_path=args.state,
     )
+    print(f"\n📄 Generated wiki file: {wiki_path}")

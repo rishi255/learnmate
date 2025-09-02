@@ -1,8 +1,10 @@
 import json
-import yaml
 from pathlib import Path
-from paths import CONFIG_FILE_PATH
-from typing import Dict, Any
+from typing import Any, Dict
+
+import yaml
+
+from backend.paths import CONFIG_FILE_PATH
 
 
 def load_config(config_path: str = CONFIG_FILE_PATH):

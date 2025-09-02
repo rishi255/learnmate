@@ -140,7 +140,7 @@ The system uses an advanced state management system with automatic checkpointing
    - Preserves state even if execution is interrupted
    - Enables resumption from last successful node (basically any saved state file) via `--state` argument
    - Console progress updates for monitoring
-   - Usage: `python code/main.py --state outputs/Your_Topic/saved_wiki_state.json`
+   - Usage: `python backend/main.py --state outputs/Your_Topic/saved_wiki_state.json`
 
 4. **State Flow & Dependencies**
    - Ordered mapping of state keys to nodes
@@ -227,11 +227,10 @@ learnmate/
 ├── uv.lock                    # Dependency lock file
 ├── wiki_creation_graph.png    # Current graph visualization
 ├── README.md                  # Project overview
-├── code/                      # Main application and supporting modules
+├── backend/                   # Main application and supporting modules
 │   ├── __init__.py            # Package initialization
 │   ├── llm.py                 # LLM configuration and setup
 │   ├── main.py                # Core pipeline implementation
-│   ├── main_joke.py           # Example implementation
 │   ├── paths.py               # Path configuration
 │   ├── prompt_builder.py      # Prompt construction utilities
 │   ├── utils.py               # Shared utilities
@@ -263,7 +262,7 @@ learnmate/
 From the repository root:
 
 ```bash
-python code/main.py
+python backend/main.py
 ```
 
 This starts the CLI-based wiki generation pipeline.
@@ -278,7 +277,7 @@ This starts the CLI-based wiki generation pipeline.
   - Progress tracking
 - To resume from a checkpoint:
   1. Locate the saved state JSON
-  2. Run with `--state` argument: `python code/main.py --state outputs/Your_Topic/saved_wiki_state.json`
+  2. Run with `--state` argument: `python backend/main.py --state outputs/Your_Topic/saved_wiki_state.json`
 
 ### Configuration
 
