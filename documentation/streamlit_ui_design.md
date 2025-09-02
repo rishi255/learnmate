@@ -1,44 +1,47 @@
 # Streamlit UI Design Document
 
-## Scope Overview
+## Overview
 
-### In Scope (Phase 1)
+LearnMate's frontend is implemented as a Streamlit web application that provides an intuitive interface for generating and viewing visual wikis. The UI focuses on simplicity and effectiveness while maintaining a smooth user experience.
 
-1. **Topic Input and Generation**
-   - Clean text input field
-   - "Generate Wiki" button with loading state
-   - State file upload option for resuming generation
+## Interface Layout
 
-2. **Wiki Display**
-   - Collapsible table of contents
-   - Expandable sections for content
-   - Syntax-highlighted code blocks
-   - Basic Mermaid diagram support (native Streamlit rendering)
+### Current Implementation
 
-3. **State Management**
-   - Leveraging existing state management system
-   - State file upload/download functionality
-   - Session state persistence
+#### Main Sections
 
-### Future Enhancements (Out of Scope)
+| UI Section | Function |
+| ---------- | -------- |
+| **Sidebar** | Contains app title and state file upload |
+| **Topic Input Box** | User enters any topic (e.g., "How DNS Works") |
+| **Generate Wiki Button** | Triggers the wiki generation pipeline |
+| **Wiki Content View** | Renders markdown content with Mermaid diagrams |
+| **Error Display** | Shows detailed error messages with tracebacks |
 
-1. URL/document context support
-2. Real-time progress tracking
-3. Interactive Mermaid diagrams (beyond native support)
-4. Responsive tables and image zoom
-5. Interactive content editing
-6. Export options (PDF, etc.)
-7. Performance optimizations
-8. Advanced error handling and recovery
-9. Responsive design
-10. Authentication system
+### Implemented Features
 
-## Technical Design
+| UI Section | Function |
+| ---------- | -------- |
+| **Generated Wiki Viewer** | Displays structured markdown with automatic section organization |
+| **Diagrams & Visuals** | Native Mermaid diagram rendering through Streamlit markdown |
 
-### 1. File Structure
+### Planned Extensions
+
+| UI Section | Function |
+| ---------- | -------- |
+| **Interactive Features** | Enhanced section navigation and content interaction |
+| **Feedback Box** | User feedback collection and wiki editing capabilities |
+| **DALL·E Integration** | AI-generated images for supported sections |
+| **Audio Controls** | Optional TTS playback (future enhancement) |
+
+## Key Features
+
+### Core Components
+
+1. **Project Structure**
 
 ```
-streamlit/
+frontend/
 ├── app.py              # Main Streamlit application
 ├── components/         # Core UI components
 │   ├── wiki_viewer.py  # Wiki content display
@@ -47,120 +50,85 @@ streamlit/
     └── state.py       # State management
 ```
 
-### 2. State Management
-
-#### Session State Structure
+1. **Session State**
 
 ```python
 st.session_state = {
-    'current_topic': str,          # Current topic being processed
-    'wiki_state': dict,            # Main state dictionary from core system
-    'expanded_sections': set,      # Track expanded/collapsed sections
-    'error_message': str          # Current error message if any
+    'current_topic': str,     # Current topic being processed
+    'error_message': str,     # Current error message if any
+    'wiki_path': str,        # Path to the generated wiki file
 }
 ```
 
-### 3. Agent Integration System
+1. **Component Design**
 
-#### Event Emission Architecture
+#### Main App (`app.py`)
 
-The integration between the core system and Streamlit UI will use an event-driven approach:
+- Initializes session state
+- Handles topic input and generation flow
+- Manages state file upload workflow
+- Provides error handling and user feedback
+- Coordinates between components
 
-```python
-from typing import Protocol, Dict, Any
-from enum import Enum
+#### Wiki Viewer (`wiki_viewer.py`)
 
-class AgentEvent(Enum):
-    STARTED = "started"
-    COMPLETED = "completed"
-    ERROR = "error"
+- Reads and displays markdown content
+- Handles Mermaid diagram rendering
+- Simple, file-based content display
 
-class AgentEventEmitter(Protocol):
-    def emit(self, agent_name: str, event_type: AgentEvent, data: Dict[str, Any] = None) -> None:
-        """Emit an agent event"""
-        pass
+#### Sidebar (`sidebar.py`)
 
-class StreamlitEventHandler:
-    def __init__(self):
-        self._callbacks: Dict[AgentEvent, callable] = {}
-    
-    def handle_event(self, agent_name: str, event_type: AgentEvent, data: Dict[str, Any] = None):
-        """Handle events from agents and update Streamlit UI accordingly"""
-        if event_type == AgentEvent.STARTED:
-            st.session_state[f"{agent_name}_status"] = "Running"
-        elif event_type == AgentEvent.COMPLETED:
-            st.session_state[f"{agent_name}_status"] = "Complete"
-            st.session_state.wiki_state = data['state']  # Update wiki state
-        elif event_type == AgentEvent.ERROR:
-            st.session_state[f"{agent_name}_status"] = "Error"
-            st.session_state.error_message = data['error']
+- Shows application title
+- Manages state file upload
+- Validates uploaded JSON files
 
-class AgentManager:
-    def __init__(self, event_handler: StreamlitEventHandler):
-        self.event_handler = event_handler
-        
-    def run_agent(self, agent_name: str, *args, **kwargs):
-        """Run an agent with event emission"""
-        try:
-            self.event_handler.handle_event(agent_name, AgentEvent.STARTED)
-            result = self._execute_agent(agent_name, *args, **kwargs)
-            self.event_handler.handle_event(agent_name, AgentEvent.COMPLETED, {'state': result})
-        except Exception as e:
-            self.event_handler.handle_event(agent_name, AgentEvent.ERROR, {'error': str(e)})
-```
+#### State Management (`state.py`)
 
-### 4. Wiki Generation Pipeline Integration
+- Minimal session state initialization
+- Error message handling
+- Clean state management
 
-The wiki generation pipeline will be integrated through a wrapper class that manages the async operation and state updates:
+### Current Features
 
-```python
-class StreamlitWikiGenerator:
-    def __init__(self, agent_manager: AgentManager):
-        self.agent_manager = agent_manager
-        
-    async def generate_wiki(self, topic: str):
-        """Main wiki generation pipeline for Streamlit"""
-        # 1. Initialize session state
-        st.session_state.current_topic = topic
-        st.session_state.wiki_state = {}
-        
-        # 2. Sequential agent execution with state updates
-        try:
-            # Research Phase
-            research_result = await self.agent_manager.run_agent(
-                "research_agent",
-                topic=topic
-            )
-            
-            # Planning Phase
-            plan_result = await self.agent_manager.run_agent(
-                "planner_agent",
-                research=research_result
-            )
-            
-            # Parallel Content & Design Phase
-            content_task = self.agent_manager.run_agent(
-                "content_writer_agent",
-                plan=plan_result
-            )
-            design_task = self.agent_manager.run_agent(
-                "design_coder_agent",
-                plan=plan_result
-            )
-            
-            content_result, design_result = await asyncio.gather(
-                content_task,
-                design_task
-            )
-            
-            # Final merge and update
-            final_wiki = self._merge_results(content_result, design_result)
-            st.session_state.wiki_state = final_wiki
-            
-        except Exception as e:
-            st.session_state.error_message = str(e)
-            raise
-```
+1. **Core Functionality**
+   - Topic input with validation
+   - Wiki generation with progress feedback
+   - State file upload for resumption
+   - Direct markdown file rendering
+
+2. **User Interface**
+   - Clean, minimal design
+   - Clear error messages with tracebacks
+   - Loading states and progress indicators
+   - Native Mermaid diagram support
+
+3. **State Management**
+   - File-based state preservation
+   - Simple session state
+   - Efficient error handling
+
+### Future Enhancements (Planned)
+
+1. **Phase 2: UI Improvements**
+   - Collapsible table of contents
+   - Better progress tracking
+   - Enhanced error recovery
+   - Expandable sections
+
+2. **Phase 3: Advanced Features**
+   - URL/document context support
+   - Interactive Mermaid diagrams
+   - Export capabilities (PDF)
+   - Responsive design
+   - Performance optimizations
+
+### Design Principles
+
+- Uses native Streamlit features where possible
+- Prioritizes simplicity and reliability
+- File-based approach for efficiency
+- Clear error handling and user feedback
+- No complex state management needed
 
 ## Implementation Phases
 
@@ -201,15 +169,23 @@ class StreamlitWikiGenerator:
 ```
 ├── Sidebar
 │   ├── Application Title
-│   └── State File Upload
+│   └── State File Upload (JSON)
 ├── Main Content
 │   ├── Topic Input
 │   │   ├── Text Input
 │   │   └── Generate Button
-│   └── Wiki Display
-│       ├── Table of Contents
-│       └── Content Sections
-└── Error Display (if any)
+│   ├── Progress Indicators
+│   │   ├── Loading Spinners
+│   │   └── Success/Info Messages
+│   ├── Wiki Display
+│   │   ├── Markdown Content
+│   │   └── Mermaid Diagrams
+│   └── Error Display
+       ├── Error Messages
+       └── Full Traceback (if any)
+├── Temporary Storage
+│   └── temp/
+       └── Uploaded State Files
 ```
 
 ## Notes
