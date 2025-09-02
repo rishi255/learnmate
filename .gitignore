@@ -7,5 +7,7 @@ __pycache__/
 .env
 .venv
 
-# code/main_joke.py
 archive*
+
+# streamlit temporary uploaded files
+temp/
