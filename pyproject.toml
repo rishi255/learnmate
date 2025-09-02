@@ -12,4 +12,5 @@ dependencies = [
     "pyjokes>=0.8.3",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
+    "streamlit>=1.49.1",
 ]
