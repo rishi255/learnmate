@@ -36,7 +36,7 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
 2. 🎬 Start the generator:
 
    ```bash
-   python code/main.py
+   python backend/main.py
    ```
 
 3. 💡 Enter your topic and watch the magic happen!
@@ -45,7 +45,7 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
 
    ```bash
    # State is automatically saved after each successful node
-   python code/main.py --state outputs/Your_Topic/saved_wiki_state.json
+   python backend/main.py --state outputs/Your_Topic/saved_wiki_state.json
    ```
 
    This will continue from the last successful node, skipping completed steps.

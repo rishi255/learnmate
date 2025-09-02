@@ -2,7 +2,40 @@
 
 ### 🎯 Goal
 
-Build a multi-agent system that **generates comprehensive, visually structured wikis** on any topic, with automatically generated diagrams and clear explanations — all accessible via a **Streamlit web interface**.
+Build a multi-agent system that **generates comprehensive, visually structured wikis** on a## 🌐 Frontend Inte# Frontend Integration - Future Enhancements
+
+Additional integration points planned for future iterations:
+
+1. **Interactive Feedback**
+   - User feedback collection
+   - Wiki content editing capabilities
+   - Interactive visual adjustments
+
+2. **Enhanced Output**
+   - DALL·E image integration
+   - Expandable content sections
+   - Optional audio support (TTS)
+
+For complete frontend specifications, see `documentation/streamlit_ui_design.md`.
+
+The backend system interfaces with a Streamlit frontend through these key touchpoints:
+
+1. **Input Interface**
+   - Topic input reception
+   - State file handling for resumption
+   - Generation trigger events
+
+2. **Output Interface**
+   - Markdown content delivery
+   - Mermaid diagram code output
+   - State file generation for checkpointing
+
+3. **Error Interface**
+   - Structured error information
+   - Progress status updates
+   - Validation feedback
+
+For detailed frontend implementation, refer to `documentation/streamlit_ui_design.md`.
 
 ---
 
@@ -228,23 +261,31 @@ learnmate/
 ├── wiki_creation_graph.png    # Current graph visualization
 ├── README.md                  # Project overview
 ├── backend/                   # Main application and supporting modules
-│   ├── __init__.py            # Package initialization
-│   ├── llm.py                 # LLM configuration and setup
-│   ├── main.py                # Core pipeline implementation
-│   ├── paths.py               # Path configuration
-│   ├── prompt_builder.py      # Prompt construction utilities
-│   ├── utils.py               # Shared utilities
-├── config/
-│   ├── config.yaml            # System configuration
-│   ├── prompt_config.yaml     # Agent prompts and templates
-├── documentation/
-│   ├── design.md              # Architecture and design documentation
-│   ├── multi_agent_design_flowchart.mmd  # Architecture diagram source
-│   ├── multi_agent_design_flowchart.png  # Rendered architecture diagram
-├── outputs/                   # Generated wiki content
-    ├── [Topic_Name]/          # Topic-specific outputs
-        ├── complete_wiki.md    # Final merged wiki content
-        ├── saved_wiki_state.json # Serialized state for resumption
+│   ├── __init__.py           # Package initialization
+│   ├── llm.py                # LLM configuration and setup
+│   ├── main.py               # Core pipeline implementation
+│   ├── paths.py              # Path configuration
+│   ├── prompt_builder.py     # Prompt construction utilities
+│   └── utils.py              # Shared utilities
+├── config/                    # Configuration files
+│   ├── config.yaml           # System configuration
+│   └── prompt_config.yaml    # Agent prompts and templates
+├── documentation/            # Project documentation
+│   ├── design.md            # Architecture and design documentation
+│   ├── streamlit_ui_design.md # UI design specifications
+│   ├── multi_agent_design_flowchart.mmd # Architecture diagram source
+│   └── multi_agent_design_flowchart.png # Rendered architecture diagram
+├── frontend/                 # Streamlit web interface
+│   ├── app.py               # Main Streamlit application
+│   ├── components/          # UI components
+│   │   ├── sidebar.py      # Sidebar implementation
+│   │   └── wiki_viewer.py  # Wiki content display
+│   └── utils/              # Frontend utilities
+│       └── state.py        # Session state management
+└── outputs/                 # Generated wiki content
+    └── [Topic_Name]/       # Topic-specific outputs
+        ├── complete_wiki.md # Final merged wiki content
+        └── saved_wiki_state.json # Serialized state for resumption
 ```
 
 ---
