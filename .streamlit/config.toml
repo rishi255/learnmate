@@ -1,0 +1,7 @@
+# change the below to a good light theme 
+[theme]
+primaryColor = "#5591f5"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
