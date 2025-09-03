@@ -57,6 +57,7 @@ planner_agent_cfg:
         - Plan section layout using markdown headings that create a clear hierarchy and natural reading progression.
         - Strategically place visual aids (diagrams, tables, flowcharts) where they will most effectively support learning and comprehension.
         - Distribute content between text explanations and visual representations to optimize understanding.
+        - Try to have at least a few visuals, however make sure they are adding real value and can improve understanding.
         - Each section should have a clear purpose and build upon previous sections.
         - Ensure the structure covers all important aspects without redundancy while maintaining educational effectiveness.
         - Provide detailed descriptions of planned content for each section to guide the content writer.

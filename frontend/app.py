@@ -37,6 +37,7 @@ def main():
                 if wiki_path:
                     st.success("Wiki generated successfully from saved state!")
                     wiki_viewer.display_wiki_content(wiki_path)
+                    print("Wiki displayed successfully!")
                 else:
                     st.warning(
                         "No wiki path returned from generation. The state file might be invalid or incomplete."
@@ -49,7 +50,7 @@ def main():
                 st.error(f"Full error:\n{traceback.format_exc()}")
 
         if st.button("Generate New Wiki"):
-            st.session_state.current_topic = ""
+            state.clear_session_state()
             st.rerun()
         return
 

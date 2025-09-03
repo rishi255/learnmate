@@ -9,7 +9,6 @@ def display_wiki_content(wiki_path: str):
     if not wiki_path or not Path(wiki_path).exists():
         return
 
-    # Read and display the markdown file
-    with open(wiki_path, 'r') as f:
+    with open(wiki_path, "r", encoding="utf-8") as f:
         content = f.read()
-        st.markdown(content)
+        st.markdown(content, unsafe_allow_html=True)

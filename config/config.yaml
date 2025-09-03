@@ -1,8 +1,13 @@
+# LLM configuration for nodes
 research_model_llm: gpt-4o-mini
 planner_model_llm: gpt-4o-mini
 content_writer_model_llm: gpt-4o-mini
 design_coder_model_llm: gpt-4o-mini
 
+# Other configuration
+mermaid_api_base_url: https://mermaid.ink
+
+# Reasoning strategies for prompts (used by prompt builder)
 reasoning_strategies:
     CoT: |
         Use this systematic approach to provide your response:

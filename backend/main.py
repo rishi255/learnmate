@@ -17,6 +17,7 @@ from backend.llm import get_llm
 from backend.paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
 from backend.prompt_builder import build_prompt_from_config
 from backend.utils import load_config, save_state_checkpoint
+from backend.mermaid_lib import render_mermaid_svg_bytes, svg_bytes_to_data_uri
 
 # ===================
 # Define Structured Output Classes for Agents
@@ -75,18 +76,6 @@ class PlannedVisualOutput(BaseModel):
     description: str = Field(
         description="A detailed description of the visual element that explains its purpose and content."
     )
-    # generation_prompt: str = Field(
-    #     description="This should clearly outline the steps or components of the visual element, which can be used to generate the visual using Mermaid code.",
-    # )
-
-
-# class VisualWithCodeOutput(VisualWithoutCodeOutput):
-#     """Represents a visual element that is part of a Wiki Subtopic. This also includes the code to generate the visual."""
-
-#     code: str = Field(
-#         description="The Mermaid code to generate the visual element.",
-#         default=None,
-#     )  # code to generate the visual (if applicable)
 
 
 class PlannedSectionOutput(BaseModel):
@@ -500,7 +489,7 @@ def content_writer_agent_node(state: AgentState) -> dict:
     # Save checkpoint
     topic_dir = get_topic_directory_name(state["user_input"])
     save_state_checkpoint({**state, **result}, topic_dir)
-    print("� Content writer node completed - State checkpoint saved")
+    print("🔄 Content writer node completed - State checkpoint saved")
 
     return result
 
@@ -528,10 +517,6 @@ def design_coder_agent_node(state: AgentState) -> dict:
 
     topic = get_cleaned_topic_name(state["user_input"])
     topic_dir = get_topic_directory_name(topic, create=True)
-    output_file = str(Path(topic_dir) / "generated_wiki_visuals.md")
-
-    # with open(output_file, "w") as f:
-    #     for section in design_output.sections:
 
     result = {"design_code": design_output.model_dump()}
 
@@ -601,8 +586,19 @@ def merge_wiki_and_visuals_node(state: AgentState) -> dict:
                     )
                     continue
                 if visual["visual_type"] == "mermaid_diagram":
-                    merged_content += f"```mermaid\n{visual['code']}\n```\n\n"
-                else:
+                    print("\tRendering Mermaid diagram...")
+                    base_url = app_cfg.get("mermaid_api_base_url")
+                    svg_bytes, err = render_mermaid_svg_bytes(visual["code"], base_url)
+                    if err:
+                        print(
+                            f"❗ Failed to render Mermaid SVG using base '{base_url}': {err}. Embedding code block instead."
+                        )
+                        merged_content += f"```mermaid\n{visual['code']}\n```\n\n"
+                    else:
+                        data_uri = svg_bytes_to_data_uri(svg_bytes)
+                        alt = visual.get("title") or "Diagram"
+                        merged_content += f"![{alt}]({data_uri})\n\n"
+                else:  # table
                     merged_content += f"{visual['code']}\n\n"
 
     with open(output_file, "w") as f:
@@ -682,7 +678,7 @@ def main(
     graph = build_graph()
 
     # Get image representation of the graph
-    print("\n📊 Generating graph...")
+    print("\n📊 Generating graph visualization...")
     graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
     graph.get_graph().draw_mermaid_png(
         output_file_path=graph_png_save_path,
@@ -691,8 +687,6 @@ def main(
         # retry_delay=2.0,
     )
     print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
-
-    print("\n🚀 Starting the wiki creation process...")
 
     starting_state: AgentState = {
         "user_input": user_input,  # Initialize with exact user input, not cleaned to give the research agent the exact input
@@ -707,13 +701,18 @@ def main(
         "quit": None,
     }
 
-    if starting_state_file_path:
+    if not starting_state_file_path:
+        print(f"🛠️ No state file path provided. Generating wiki from scratch.")
+    else:
+        print(f"📂 Loading state from '{starting_state_file_path}'...")
+
         # If state file was requested but doesn't exist, return early
         if not Path(starting_state_file_path).exists():
-            print(f"❗ State file '{starting_state_file_path}' does not exist.")
+            print(
+                f"❗ State file '{starting_state_file_path}' was passed but it does not exist."
+            )
             return None
-        
-        print(f"📂 Loading state from '{starting_state_file_path}'...")
+
         with open(starting_state_file_path, "r") as f:
             loaded_state = json.load(f)
             # Merge loaded state with initial_state to ensure all keys are present
@@ -725,6 +724,8 @@ def main(
 
     if user_input and user_input.lower() == EXIT_COMMAND:
         return  # exit early if the topic is the exit command
+
+    print(f"\n🚀 Starting the wiki creation process for user input: '{user_input}'...")
 
     # Clean topic name and create directory
     cleaned_topic = get_cleaned_topic_name(user_input)
