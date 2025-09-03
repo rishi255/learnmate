@@ -2,21 +2,11 @@
 
 ### 🎯 Goal
 
-Build a multi-agent system that **generates comprehensive, visually structured wikis** on a## 🌐 Frontend Inte# Frontend Integration - Future Enhancements
+Build a multi-agent system that **generates comprehensive, visually structured wikis** on any topic.
 
-Additional integration points planned for future iterations:
+## 🌐 Frontend Integration
 
-1. **Interactive Feedback**
-   - User feedback collection
-   - Wiki content editing capabilities
-   - Interactive visual adjustments
-
-2. **Enhanced Output**
-   - DALL·E image integration
-   - Expandable content sections
-   - Optional audio support (TTS)
-
-For complete frontend specifications, see `documentation/streamlit_ui_design.md`.
+For UI layout, implemented features, and the UI roadmap, see `documentation/streamlit_ui_design.md`. This backend document focuses on the server-side pipeline, state management, and rendering responsibilities only.
 
 The backend system interfaces with a Streamlit frontend through these key touchpoints:
 
@@ -27,7 +17,7 @@ The backend system interfaces with a Streamlit frontend through these key touchp
 
 2. **Output Interface**
    - Markdown content delivery
-   - Mermaid diagram code output
+   - SVG diagrams embedded in markdown (data URIs); fallback to Mermaid code blocks if rendering fails
    - State file generation for checkpointing
 
 3. **Error Interface**
@@ -196,49 +186,13 @@ The system uses an advanced state management system with automatic checkpointing
 
 Content generation and visual design run in parallel for efficiency
 
----
+## 🖼️ Mermaid Rendering Pipeline
 
-## 🌐 User Interface: **Streamlit Frontend** (Planned for Future)
-
-### 📌 Layout Overview
-
-| UI Section                 | Function                                                 |
-| -------------------------- | -------------------------------------------------------- |
-| **Topic Input Box**        | User enters any topic (e.g., “How DNS Works”)            |
-| **“Generate Wiki” Button** | Triggers the agent pipeline                              |
-| **Generated Wiki Viewer**  | Displays structured output with expandable sections      |
-| **Diagrams & Images**      | Renders inline visuals using DALL·E or Mermaid           |
-| **Feedback Box**           | User gives optional feedback to edit the generated wiki  |
-
-### Streamlit Features Used
-
-- `st.chat_message` for Tutor interaction
-- `st.expander` for collapsible content sections
-- `st.image` for visual rendering
-- `st.session_state` for progress tracking
-- (Optional) Audio using `st.audio` if TTS is enabled
-
----
-
-## ✅ MVP
-
-- Topic Input → Generates a visual wiki with at least 5-6 sections in detail
-- At least 3-4 visuals (Mermaid diagram, table or image) throughout
-- Streamlit UI showing:  
-  - Wiki content with expandable sections
-  - Visuals with Mermaid diagrams
-- No user login/auth or persistence needed
-
----
-
-## ✨ Optional Enhancements (Stretch Goals)
-
-| Feature                       | Value                                      |
-| ---------------------------- | ------------------------------------------ |
-| Export Wiki as PDF           | Easy sharing and offline access            |
-| Multiple diagram styles      | Support for more visual formats            |
-| Custom diagram themes        | Consistent visual styling                  |
-| LLM-RAG integration          | Better content grounding via external PDFs |
+- Conversion step: the merge_wiki_and_visuals_node converts Mermaid code to SVG using backend/mermaid_lib.py and embeds results as data URIs directly into the final markdown.
+- Embedding: uses standard Markdown image syntax with data URIs.
+- Configuration: the Mermaid render service base URL is configured via config/config.yaml key mermaid_api_base_url (e.g., http://localhost:3000). If not set, the library falls back to the public https://mermaid.ink service.
+- Fallback: if rendering fails for a diagram, the original mermaid fenced code block is embedded so the document remains readable.
+- Rationale: avoids client-side scripts and preserves vector quality.
 
 ---
 
@@ -256,35 +210,36 @@ Content generation and visual design run in parallel for efficiency
 ```
 learnmate/
 ├── LICENSE                     # Project license
-├── pyproject.toml             # Python packaging and dependency configuration
-├── uv.lock                    # Dependency lock file
-├── wiki_creation_graph.png    # Current graph visualization
-├── README.md                  # Project overview
-├── backend/                   # Main application and supporting modules
-│   ├── __init__.py           # Package initialization
-│   ├── llm.py                # LLM configuration and setup
-│   ├── main.py               # Core pipeline implementation
-│   ├── paths.py              # Path configuration
-│   ├── prompt_builder.py     # Prompt construction utilities
-│   └── utils.py              # Shared utilities
-├── config/                    # Configuration files
-│   ├── config.yaml           # System configuration
-│   └── prompt_config.yaml    # Agent prompts and templates
-├── documentation/            # Project documentation
-│   ├── design.md            # Architecture and design documentation
-│   ├── streamlit_ui_design.md # UI design specifications
+├── pyproject.toml              # Python packaging and dependency configuration
+├── uv.lock                     # Dependency lock file
+├── wiki_creation_graph.png     # Current graph visualization
+├── README.md                   # Project overview
+├── backend/                    # Main application and supporting modules
+│   ├── __init__.py             # Package initialization
+│   ├── llm.py                  # LLM configuration and setup
+│   ├── main.py                 # Core pipeline implementation
+│   ├── paths.py                # Path configuration
+│   ├── prompt_builder.py       # Prompt construction utilities
+│   ├── mermaid_lib.py          # Mermaid rendering helper (API client)
+│   └── utils.py                # Shared utilities
+├── config/                     # Configuration files
+│   ├── config.yaml             # System configuration
+│   └── prompt_config.yaml      # Agent prompts and templates
+├── documentation/              # Project documentation
+│   ├── backend_design.md       # Backend architecture and design documentation
+│   ├── streamlit_ui_design.md  # UI design specifications
 │   ├── multi_agent_design_flowchart.mmd # Architecture diagram source
 │   └── multi_agent_design_flowchart.png # Rendered architecture diagram
-├── frontend/                 # Streamlit web interface
-│   ├── app.py               # Main Streamlit application
-│   ├── components/          # UI components
-│   │   ├── sidebar.py      # Sidebar implementation
-│   │   └── wiki_viewer.py  # Wiki content display
-│   └── utils/              # Frontend utilities
-│       └── state.py        # Session state management
-└── outputs/                 # Generated wiki content
-    └── [Topic_Name]/       # Topic-specific outputs
-        ├── complete_wiki.md # Final merged wiki content
+├── frontend/                   # Streamlit web interface
+│   ├── app.py                  # Main Streamlit application
+│   ├── components/             # UI components
+│   │   ├── sidebar.py          # Sidebar implementation
+│   │   └── wiki_viewer.py      # Wiki content display
+│   └── utils/                  # Frontend utilities
+│       └── state.py            # Session state management
+└── outputs/                    # Generated wiki content
+    └── [Topic_Name]/           # Topic-specific outputs
+        ├── complete_wiki.md    # Final merged wiki content
         └── saved_wiki_state.json # Serialized state for resumption
 ```
 
@@ -295,7 +250,7 @@ learnmate/
 ### Prerequisites
 
 - Python 3.x installed as per `pyproject.toml`
-- Dependencies installed using your preferred package manager (`uv` is recommended - `uv sync` or `pip install -r requirements.txt`
+- Dependencies installed using your preferred package manager (`uv` is recommended - `uv sync` or `pip install -r requirements.txt`)
 - Environment variables set (if required)
 
 ### Running the Wiki Generator
@@ -332,9 +287,3 @@ This starts the CLI-based wiki generation pipeline.
 - Files created:
   - `complete_wiki.md`: Final merged wiki
   - `saved_wiki_state.json`: Checkpoint data
-  
-### Notes
-
-- CLI interface only (Streamlit UI planned)
-- Uses LangGraph for state management
-- Supports parallel content/visual generation

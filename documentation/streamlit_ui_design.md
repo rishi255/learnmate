@@ -15,7 +15,7 @@ LearnMate's frontend is implemented as a Streamlit web application that provides
 | **Sidebar** | Contains app title and state file upload |
 | **Topic Input Box** | User enters any topic (e.g., "How DNS Works") |
 | **Generate Wiki Button** | Triggers the wiki generation pipeline |
-| **Wiki Content View** | Renders markdown content with Mermaid diagrams |
+| **Wiki Content View** | Renders markdown content with embedded SVG diagrams |
 | **Error Display** | Shows detailed error messages with tracebacks |
 
 ### Implemented Features
@@ -23,7 +23,7 @@ LearnMate's frontend is implemented as a Streamlit web application that provides
 | UI Section | Function |
 | ---------- | -------- |
 | **Generated Wiki Viewer** | Displays structured markdown with automatic section organization |
-| **Diagrams & Visuals** | Native Mermaid diagram rendering through Streamlit markdown |
+| **Diagrams & Visuals** | Diagrams rendered as images (see backend_design.md for rendering pipeline) |
 
 ### Planned Extensions
 
@@ -73,7 +73,7 @@ st.session_state = {
 #### Wiki Viewer (`wiki_viewer.py`)
 
 - Reads and displays markdown content
-- Handles Mermaid diagram rendering
+- Displays embedded diagrams; see backend_design.md for rendering details
 - Simple, file-based content display
 
 #### Sidebar (`sidebar.py`)
@@ -100,7 +100,8 @@ st.session_state = {
    - Clean, minimal design
    - Clear error messages with tracebacks
    - Loading states and progress indicators
-   - Native Mermaid diagram support
+
+- Diagrams displayed as part of markdown output (see backend_design.md)
 
 3. **State Management**
    - File-based state preservation
@@ -141,7 +142,9 @@ st.session_state = {
 2. Basic wiki display
    - Collapsible sections
    - Table of contents
-   - Basic Mermaid rendering
+
+- Diagram display (see backend_design.md for rendering pipeline)
+
 3. Core state management
    - State file handling
    - Session state setup
@@ -179,7 +182,7 @@ st.session_state = {
 │   │   └── Success/Info Messages
 │   ├── Wiki Display
 │   │   ├── Markdown Content
-│   │   └── Mermaid Diagrams
+│   │   └── Diagrams (images)
 │   └── Error Display
        ├── Error Messages
        └── Full Traceback (if any)
