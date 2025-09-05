@@ -29,26 +29,20 @@ from backend.mermaid_lib import (
 )
 from backend.paths import CONFIG_FILE_PATH, OUTPUTS_DIR, PROMPT_CONFIG_FILE_PATH
 from backend.prompt_builder import build_prompt_from_config
-from backend.utils import load_config, save_state_checkpoint
+from backend.utils import (
+    load_config,
+    save_state_checkpoint,
+    get_topic_directory_name,
+)
+
+EXIT_COMMAND = "exit"  # Command to exit the bot
 
 # ===================
 # Define Structured Output Classes for Agents
 # ===================
 
-EXIT_COMMAND = "exit"  # Command to exit the bot
 
-
-class ResearchedSubtopicOutput(BaseModel):
-    """Represents a subtopic within a research topic."""
-
-    name: str = Field(
-        description="The title of the subtopic to be covered in the wiki."
-    )  # title of the subtopic
-    description: str = Field(
-        description="A brief description of the subtopic to be covered in the wiki."
-    )  # description of the subtopic
-
-
+# Initial Research:
 class InitialResearchOutput(BaseModel):
     """Output from initial research phase"""
 
@@ -63,6 +57,21 @@ class InitialResearchOutput(BaseModel):
     )
     search_urls: List[str] = Field(
         default_factory=list, description="URLs of sources found in initial search"
+    )
+
+
+# Deep Research:
+class ResearchedSubtopicOutput(BaseModel):
+    """Represents a subtopic within a research topic."""
+
+    name: str = Field(
+        description="The title of the subtopic to be covered in the wiki."
+    )
+    description: str = Field(
+        description="An extremely detailed description of the subtopic to be covered in the wiki."
+    )
+    facts: List[str] = Field(
+        description="A list of the 10 most important facts about this subtopic to include in the wiki."
     )
 
 
@@ -90,6 +99,7 @@ class CombinedResearchOutput(BaseModel):
     )
 
 
+# Structure Planning:
 class PlannedVisualOutput(BaseModel):
     """Represents the plan of a visual element that is part of a Wiki Section."""
 
@@ -131,29 +141,25 @@ class PlannerOutput(BaseModel):
     )
 
 
+# Content Generation:
 class WikiSectionOutput(BaseModel):
     """Represents a section of the generated wiki, excluding visuals."""
 
-    title: str = Field(
-        description="Title of the section. NOTE that this should ALWAYS be the same as the corresponding section in the plan."
-    )
     content: str = Field(
-        description="Full markdown content for this section (text only). This should NOT include any visual elements AT ALL like images, diagrams or tables."
+        description="Markdown content for this section (text only, excluding the section heading). DO NOT INCLUDE THE SECTION HEADING HERE. Also this should NOT include any visual elements AT ALL like images, diagrams or tables."
     )
 
 
 class WikiOutput(BaseModel):
     """Structured output for the full wiki (text only, no visuals)."""
 
-    title: str = Field(
-        description="Title of the wiki page. NOTE that this should ALWAYS be the same as the title in the plan."
-    )
     sections: List[WikiSectionOutput] = Field(
         default_factory=list,
-        description="Textual sections for the wiki, one per section in the plan, in order. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
+        description="List of text-only sections to be included in the wiki page. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
     )
 
 
+# Design Coding:
 class CodedVisualOutput(BaseModel):
     """Represents a visual element that is part of a Wiki Section. This includes the code to generate the visual."""
 
@@ -180,9 +186,6 @@ class CodedVisualSectionOutput(BaseModel):
     Represents a section of the generated wiki that contains visual elements.
     """
 
-    # title: str = Field(
-    #     description="Title of the section. NOTE that this should ALWAYS be the same as the corresponding section in the wiki text."
-    # )
     visuals: List[CodedVisualOutput] = Field(
         default_factory=list,
         description="List of visual elements related to the section.",
@@ -192,12 +195,9 @@ class CodedVisualSectionOutput(BaseModel):
 class DesignCoderOutput(BaseModel):
     """Structured output for the design coding process."""
 
-    # title: str = Field(
-    #     description="The title of the wiki page. NOTE that this should ALWAYS be the same as the title in the plan."
-    # )
     sections: List[CodedVisualSectionOutput] = Field(
         default_factory=list,
-        description="List of sections to be included in the wiki page, each with its own title and visuals. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
+        description="List of sections to be included in the wiki page, each with its own visuals. NOTE that sections should ALWAYS match the corresponding sections in the planned structure.",
     )
 
 
@@ -233,62 +233,13 @@ class AgentState(TypedDict):
     quit: bool | None  # Whether to exit the bot
 
 
-# ===================
-# Utilities
-# ===================
-
-
-def get_cleaned_topic_name(topic: str) -> str:
-    """Cleans the topic name by removing unwanted characters.
-
-    Args:
-        topic: The raw topic name
-
-    Returns:
-        str: Cleaned topic name suitable for file paths
-    """
-    return "".join(
-        char for char in topic if char.isalnum() or char in ("_", " ") or char.isspace()
-    ).replace(" ", "_")
-
-
-def get_topic_directory_name(topic: str, create: bool = True) -> str:
-    """Returns (and optionally creates) the directory path for storing topic outputs.
-
-    Args:
-        topic: The topic name
-        create: Whether to create the directory if it doesn't exist
-
-    Returns:
-        str: Absolute path to the topic directory
-    """
-    topic_name = get_cleaned_topic_name(topic)
-    topic_dir = Path(OUTPUTS_DIR) / topic_name
-
-    if create:
-        topic_dir.mkdir(parents=True, exist_ok=True)
-
-    return str(topic_dir)
-
-
-# ===================
-# Define Nodes
-# ===================
-
-
-def exit_bot_node(state: AgentState) -> dict:
-    print("\n" + "🚪" + "=" * 58 + "🚪")
-    print("    GOODBYE!")
-    print("=" * 60)
-    return {"quit": True}
-
-
 # ========== Prompt Config ==========
 
 prompt_cfg: dict = load_config(PROMPT_CONFIG_FILE_PATH)
 app_cfg: dict = load_config(CONFIG_FILE_PATH)
 
-# ========== Tool Definitions ==========
+
+# ========== Custom Tool Definitions ==========
 
 
 @tool
@@ -314,17 +265,6 @@ def validate_mermaid_syntax(mermaid_code: str) -> bool:
     return True
 
 
-def get_tools():
-    return [
-        validate_mermaid_syntax,
-        TavilySearch(
-            topic="general",
-            search_depth="advanced",
-            include_images=True,
-        ),
-    ]
-
-
 # ========== Agent Nodes ==========
 
 
@@ -336,7 +276,6 @@ def research_agent_node(state: AgentState) -> dict:
     Returns combined research results in structured format.
     """
 
-    # Check if combined_research is already populated
     if state.get("combined_research"):
         print("✅ Combined research is already populated. Skipping research node.")
         return {}
@@ -347,29 +286,31 @@ def research_agent_node(state: AgentState) -> dict:
     initial_prompt = build_prompt_from_config(
         initial_config,
         app_config=app_cfg,
-        input_data=repr(state["user_input"]),
     )
 
     research_agent: CompiledStateGraph = create_react_agent(
         name="ResearchAgent",
         model=research_llm,
         tools=[
+            # giving the research agent advanced search with images and max 10 results instead of 5
             TavilySearch(
                 topic="general",
+                max_results=10,
                 search_depth="advanced",
                 include_images=True,
             )
         ],
-        debug=True,
+        # debug=True,
         response_format=CombinedResearchOutput,
         prompt=initial_prompt,
     )
 
-    agent_response = research_agent.invoke(
-        {
-            "input": f'Now perform research for the given user input: {state["user_input"]}'
-        }
-    )
+    messages = [
+        HumanMessage(
+            f'Now perform research for the given user input: {state["user_input"]}'
+        )
+    ]
+    agent_response = research_agent.invoke({"messages": messages})
     i = 0
     for event in agent_response:
         message = event
@@ -381,8 +322,7 @@ def research_agent_node(state: AgentState) -> dict:
     result = {"combined_research": structured_response.model_dump()}
 
     # Save checkpoint
-    topic = get_cleaned_topic_name(state["user_input"])
-    topic_dir = get_topic_directory_name(topic, create=True)
+    topic_dir = get_topic_directory_name(state["user_input"])
     save_state_checkpoint({**state, **result}, topic_dir)
     print("🔄 Research agent node completed - State checkpoint saved")
 
@@ -391,7 +331,6 @@ def research_agent_node(state: AgentState) -> dict:
 
 def planner_agent_node(state: AgentState) -> dict:
     """Planner agent - creates a structured plan for the wiki content with sections and visual suggestions, based on the research done by the research agent."""
-    # Check if structure_plan is already populated
     if state.get("structure_plan"):
         print("✅ Structure plan is already populated. Skipping planner node.")
         return {}
@@ -414,8 +353,7 @@ def planner_agent_node(state: AgentState) -> dict:
     }
 
     # Save checkpoint
-    topic = get_cleaned_topic_name(state["user_input"])
-    topic_dir = get_topic_directory_name(topic, create=True)
+    topic_dir = get_topic_directory_name(state["user_input"])
     save_state_checkpoint({**state, **result}, topic_dir)
     print("🔄 Planner agent node completed - State checkpoint saved")
 
@@ -436,10 +374,14 @@ def content_writer_agent_node(state: AgentState) -> dict:
     for section in structure_plan["sections"]:
         del section["visuals"]
 
+    # we will fill in the content in this structure
+    content_writer_result: WikiOutput = deepcopy(structure_plan)
+
     # Build a single prompt for the entire plan (all sections)
     full_plan_prompt = build_prompt_from_config(
         prompt_cfg["content_writer_agent_cfg"],
         app_config=app_cfg,
+        # include entire structure plan for context, but ask model to generate content for only one at a time.
         input_data=repr(structure_plan),
     )
 
@@ -447,34 +389,47 @@ def content_writer_agent_node(state: AgentState) -> dict:
         name="ContentWriterAgent",
         model=content_llm,
         tools=[
+            # giving content writer advanced search with max 10 results instead of 5
             TavilySearch(
                 topic="general",
                 search_depth="advanced",
+                max_results=10,
             )
         ],
         debug=True,
-        response_format=WikiOutput,
+        response_format=WikiSectionOutput,
         prompt=full_plan_prompt,
     )
 
-    agent_response = content_writer_agent.invoke(
-        {
-            "input": f"Now write the full wiki content (text only, no visuals) using the structure plan given above."
-        }
-    )
-    i = 0
-    for event in agent_response:
-        message = event
-        print(f"Agent message #{i}: {message}")
-        i += 1
+    # instead of calling agent for entire wiki at once, call it for each section
+    # this way, we can ensure that the number of sections and section titles remain exactly the same as the input plan
+    # and we can just stitch the content into the sections ourselves
+    for section in content_writer_result["sections"]:
+        print(f"\n✏️ Generating wiki content for section: {section['title']}")
+        messages = [
+            HumanMessage(
+                content=f"""Generate the content for ONLY one section, whose structured plan is given below. 
+                What follows is the planned specification for the section. 
+                Remember this is only one section and does not need to be complete in itself. 
+                It just needs to follow the planned structure given.
+                IN ANY CASE, DO NOT INCLUDE the section title in the generated content.
+                {repr(section)}"""
+            )
+        ]
+        section_agent_response = content_writer_agent.invoke({"messages": messages})
+        section_structured_response: WikiSectionOutput = section_agent_response[
+            "structured_response"
+        ]
 
-    structured_response: WikiOutput = agent_response["structured_response"]
+        # description not needed anymore after content generation
+        del section["description"]
+        # stitch the generated content into the planned section
+        section["content"] = section_structured_response.model_dump()["content"]
 
-    result = {"wiki_content": structured_response.model_dump()}
+    result = {"wiki_content": content_writer_result}
 
     # Save checkpoint
-    topic = get_cleaned_topic_name(state["user_input"])
-    topic_dir = get_topic_directory_name(topic, create=True)
+    topic_dir = get_topic_directory_name(state["user_input"])
     save_state_checkpoint({**state, **result}, topic_dir)
     print("🔄 Content writer node completed - State checkpoint saved")
 
@@ -490,26 +445,27 @@ def design_coder_agent_node(state: AgentState) -> dict:
 
     design_llm = get_llm(app_cfg["design_coder_model_llm"], temperature=0)
     structure_plan: PlannerOutput = state["structure_plan"]
-    design_coder_result: DesignCoderOutput = deepcopy(
-        structure_plan
-    )  # we will fill in the visuals in this structure
+
+    # we will fill in the visuals in this structure
+    design_coder_result: DesignCoderOutput = deepcopy(structure_plan)
 
     # Build prompt for diagrams generation from planner's specification
     visual_prompt = build_prompt_from_config(
         prompt_cfg["design_coder_agent_cfg"],
         app_config=app_cfg,
-        # input_data=repr(structure_plan),
     )
 
     design_coder_agent: CompiledStateGraph = create_react_agent(
         name="DesignCoderAgent",
         model=design_llm,
         tools=[
+            validate_mermaid_syntax,
+            # giving the design coder basic search with max results 30 (and including images)
             TavilySearch(
-                topic="general",
-                search_depth="advanced",
+                search_depth="basic",  # advanced search not needed for design coder
+                max_results=30,
                 include_images=True,
-            )
+            ),
         ],
         debug=True,
         response_format=CodedVisualSectionOutput,
@@ -523,37 +479,25 @@ def design_coder_agent_node(state: AgentState) -> dict:
         if not section.get("visuals"):
             continue
         print(f"\n🎨 Generating visuals for section: {section['title']}")
-        section_agent_response = design_coder_agent.invoke(
-            {
-                "input": f"Generate visuals for the given wiki section. What follows below is the planned visual specification for the section. Ensure Mermaid diagrams use double quotes for all labels.\n\n{repr(section)}"
-            }
-        )
+        messages = [
+            HumanMessage(
+                content=f"Generate visuals for the given wiki section. What follows below is the planned visual specification for the section. Ensure Mermaid diagrams use double quotes for all labels.\n\n{repr(section)}"
+            )
+        ]
+        section_agent_response = design_coder_agent.invoke({"messages": messages})
         section_structured_response: CodedVisualSectionOutput = section_agent_response[
             "structured_response"
         ]
 
+        # description not needed anymore after content generation
+        del section["description"]
         # stitch the generated visuals into the planned section
         section["visuals"] = section_structured_response.model_dump()["visuals"]
 
-    # agent_response = design_coder_agent.invoke(
-    #     {
-    #         "input": f"Now write the code for all the visuals (diagrams, tables, images) using the structure plan given above. Ensure Mermaid diagrams use double quotes for all labels."
-    #     }
-    # )
-
-    # i = 0
-    # for event in agent_response:
-    #     message = event
-    #     print(f"Agent message #{i}: {message}")
-    #     i += 1
-    # structured_response: DesignCoderOutput = agent_response["structured_response"]
-
-    print(f"Design Coder Result: {design_coder_result}")
-    result = {"design_code": design_coder_result.model_dump()}
+    result = {"design_code": design_coder_result}
 
     # Save checkpoint
-    topic = get_cleaned_topic_name(state["user_input"])
-    topic_dir = get_topic_directory_name(topic, create=True)
+    topic_dir = get_topic_directory_name(state["user_input"])
     save_state_checkpoint({**state, **result}, topic_dir)
     print("🔄 Design coder node completed - State checkpoint saved")
 
@@ -570,8 +514,7 @@ def merge_wiki_and_visuals_node(state: AgentState) -> dict:
         print("✅ Final wiki with visuals already created. Skipping merge node.")
         return {}
 
-    topic = get_cleaned_topic_name(state["user_input"])
-    topic_dir = get_topic_directory_name(topic, create=True)
+    topic_dir = get_topic_directory_name(state["user_input"])
     output_file = str(Path(topic_dir) / "complete_wiki.md")
 
     wiki_output = state["wiki_content"]
@@ -707,15 +650,12 @@ def main(
     graph = build_graph()
 
     # Get image representation of the graph
-    print("\n📊 Generating graph visualization...")
-    graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
-    graph.get_graph().draw_mermaid_png(
-        output_file_path=graph_png_save_path,
-        # draw_method=MermaidDrawMethod.PYPPETEER,
-        # max_retries=5,
-        # retry_delay=2.0,
-    )
-    print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
+    # print("\n📊 Generating graph visualization...")
+    # graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
+    # graph.get_graph().draw_mermaid_png(
+    #     output_file_path=graph_png_save_path,
+    # )
+    # print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
 
     starting_state: AgentState = {
         "user_input": user_input,  # Initialize with exact user input, not cleaned to give the research agent the exact input
@@ -750,17 +690,12 @@ def main(
         # load topic from state
         user_input = starting_state.get("user_input")
 
-    if user_input and user_input.lower() == EXIT_COMMAND:
-        return  # exit early if the topic is the exit command
-
     print(f"\n🚀 Starting the wiki creation process for user input: '{user_input}'...")
 
-    # Clean topic name and create directory
-    cleaned_topic = get_cleaned_topic_name(user_input)
-    topic_dir = get_topic_directory_name(cleaned_topic, create=True)
+    # Create directory (ONLY CREATED HERE. Not created in nodes.)
+    topic_dir = get_topic_directory_name(user_input, create=True)
 
     config = {"configurable": {"thread_id": "1", "recursion_limit": 200}}
-    # final_state: dict = graph.invoke(starting_state, config=config)
 
     # stream the graph output to console
     final_state = None
@@ -769,12 +704,9 @@ def main(
         input=starting_state, stream_mode="values", config=config
     ):
         final_state = state
-        # print(state["quit"])
         print(f"\n--- State #{i} ---")
         print("-" * 50)
         i += 1
-
-    # final_state = final_state[-1] if final_state else starting_state
 
     # # Directory was already created at the start, just use it
     state_file = Path(topic_dir) / file_name_to_save_state
