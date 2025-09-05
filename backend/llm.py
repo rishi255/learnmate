@@ -8,8 +8,10 @@ load_dotenv()
 
 def get_llm(model_name: str, temperature: float = 0) -> BaseChatModel:
     if model_name == "gpt-4o-mini":
-        return ChatOpenAI(model="gpt-4o-mini", temperature=temperature)
+        return ChatOpenAI(model="gpt-4o-mini", temperature=temperature, max_tokens=None)
     elif model_name == "llama-3.3-70b-versatile":
-        return ChatGroq(model="llama-3.3-70b-versatile", temperature=temperature)
+        return ChatGroq(
+            model="llama-3.3-70b-versatile", temperature=temperature, max_tokens=None
+        )
     else:
         raise ValueError(f"Unknown model name: {model_name}")
