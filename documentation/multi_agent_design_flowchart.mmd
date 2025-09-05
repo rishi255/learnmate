@@ -1,49 +1,55 @@
 ---
 config:
-  layout: dagre
+  layout: elk
 ---
 flowchart TD
-     %% Main Flow
-    start([start]) --> A["User Input Node<br><i>Get Topic</i>"]
-    A --> B["Research Agent"]
-    
-    %% Research Agent
-    subgraph B["Research Agent"]
-        direction TB
-        B1["Initial Research<br><i>Web Search & Overview</i>"] --> B2["Deep Research<br><i>Key Concepts & Visuals</i>"]
-    end
-    B --> P["Planner Agent"]
-
-    %% Planner Agent
-    subgraph P["Planner Agent"]
-        P1["Structure Planning<br><i>Sections & Visuals</i>"]
-    end
-
-    %% Parallel Paths
+ subgraph B["🔎 Research Agent"]
+    direction TB
+        B2["Deep Research<br><i>Key Concepts &amp; Visuals</i>"]
+        B1["a. Initial Research<br><i>Web Search &amp; Overview</i>"]
+        WS["🌐 Web Search Tool"]
+  end
+ subgraph P["🗂 Planner Agent"]
+    direction TB
+        P1["Structure Planning<br><i>Sections &amp; Visuals</i>"]
+  end
+ subgraph ContentPath["✍️ Content Generation"]
+    direction TB
+        CV["Content Validator Agent<br><i>(Future)</i>"]
+        C["Content Writer Agent"]
+  end
+ subgraph VisualPath["🎨 Visuals Generation"]
+    direction TB
+        MV["Mermaid Validator Tool"]
+        M["Design Coder Agent"]
+  end
+    start(["Start"]) --> B
+    B1 --> B2 & WS
+    B2 --> WS
+    B --> P
     P --> ContentPath & VisualPath
-
-    %% Content Generation Path
-    subgraph ContentPath["Content Generation"]
-        C["Content Writer Agent"] --> CV["Content Validator<br><i>(Future)</i>"]
-        CV -..-> |Feedback| C
-    end
-
-    %% Visual Generation Path
-    subgraph VisualPath["Visuals Generation"]
-        M["Design Coder Agent"] --> MV["Mermaid Validator<br><i>(Future)</i>"]
-        MV -..-> |Feedback| M
-    end
-
-    %% Merge and Finalize
-    ContentPath & VisualPath --> merge["Merge Node<br><i>Combine Content & Visuals</i>"]
-
-    merge --> exit["Exit Node"]
-    exit --> endnode([end])
-
-    %% Styling
-    classDef future fill:#ffe6e6,stroke:#333
-    classDef state fill:#e6ffe6,stroke:#333,stroke-dasharray: 5 5
-    class CV,MV future
-    class save1,save2,save3,save4a,save4b,save5 state
-    style ContentPath fill:#f5f0ff,stroke:#333
-    style VisualPath fill:#f0f5ff,stroke:#333
+    C --> CV
+    CV -. Feedback ..-> C
+    M --> MV
+    MV --> M
+    ContentPath --> merge["🔗 Merge Node<br><i>Combine Content &amp; Visuals</i>"]
+    VisualPath --> merge
+    merge --> exit["📦 Output Node"]
+    exit --> endnode(["End"])
+     WS:::tool
+     CV:::future
+     C:::agent
+     MV:::tool
+     M:::agent
+     B:::agent
+     P:::agent
+     merge:::agent
+     exit:::agent
+    classDef future fill:#ffe6e6,stroke:#a33,stroke-width:2px,color:#000
+    classDef agent fill:#e6f7ff,stroke:#0366d6,stroke-width:2px,rx:10px,ry:10px
+    classDef tool fill:#fffbe6,stroke:#b59b00,stroke-width:2px,stroke-dasharray: 5 5,rx:8px,ry:8px
+    classDef process fill:#f0fff0,stroke:#228B22,stroke-width:2px,rx:8px,ry:8px
+    classDef merge fill:#f3e6ff,stroke:#7a3fbf,stroke-width:2px,rx:12px,ry:12px
+    classDef invisible fill:none,stroke:none
+    style ContentPath fill:#f5e6ff,stroke:#7a3fbf,stroke-width:2px
+    style VisualPath fill:#f5e6ff,stroke:#7a3fbf,stroke-width:2px
