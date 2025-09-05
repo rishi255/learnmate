@@ -3,6 +3,7 @@
 import streamlit as st
 from pathlib import Path
 import sys
+import traceback
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -27,7 +28,9 @@ def main():
     if starting_state_file_path:
         with st.spinner("Generating wiki from saved state..."):
             try:
-                st.info(f"Loading state from: {starting_state_file_path}")
+                st.info(
+                    f"Loading state from uploaded file: '{Path(starting_state_file_path).name}'."
+                )
 
                 # Run wiki generation with the starting state file
                 wiki_path = generate_wiki(
@@ -44,10 +47,7 @@ def main():
                     )
             except Exception as e:
                 st.session_state.error_message = str(e)
-                st.error(f"Error generating wiki: {str(e)}")
-                import traceback
-
-                st.error(f"Full error:\n{traceback.format_exc()}")
+                st.error(f"Error generating wiki: {traceback.format_exc()}")
 
         if st.button("Generate New Wiki"):
             state.clear_session_state()
@@ -80,8 +80,7 @@ def main():
 
             except Exception as e:
                 st.session_state.error_message = str(e)
-                st.error(f"Error generating wiki: {e}")
-                print(e)
+                st.error(f"Error generating wiki: {traceback.format_exc()}")
 
     # Display error message if any
     if st.session_state.error_message:
