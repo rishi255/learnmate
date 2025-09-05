@@ -16,20 +16,19 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
 1. 📦 Set up dependencies (choose one):
 
    ```bash
-   # Option 1: Using uv sync (Recommended)
-   pip install uv # if uv is not installed
-   source .venv/bin/activate # macOS and Linux
-   .venv\Scripts\activate # Windows
+   # Recommended: using uv
+   pip install uv  # if uv is not installed
    uv venv
+   source .venv/bin/activate   # MacOS/Linux
+   # or
+   .venv\Scripts\activate   # Windows
    uv sync
 
-   # Option 2: Using uv pip
-   pip install uv # if uv is not installed
-   uv venv
-   uv pip install -r requirements.txt
-
-   # Option 3: Using pip
+   # Alternative: using pip
    python -m venv .venv
+   source .venv/bin/activate   # MacOS/Linux
+   # or
+   .venv\Scripts\activate   # Windows
    pip install -r requirements.txt
    ```
 
