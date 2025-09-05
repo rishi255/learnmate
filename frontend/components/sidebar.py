@@ -3,6 +3,12 @@
 import streamlit as st
 import json
 from pathlib import Path
+from frontend.utils.state import clear_session_state
+
+
+def reset_app():
+    clear_session_state()
+    st.rerun()
 
 
 def setup_sidebar():
@@ -10,6 +16,8 @@ def setup_sidebar():
     Returns the state file path if a valid state file was uploaded, None otherwise."""
     st.sidebar.title("LearnMate")
     st.sidebar.markdown("Visual Wiki Generator")
+
+    reset_button = st.sidebar.button("Reset App", on_click=reset_app)
 
     # State file upload
     uploaded_file = st.sidebar.file_uploader(
