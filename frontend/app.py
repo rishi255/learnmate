@@ -40,7 +40,7 @@ def main():
                 if wiki_path:
                     st.success("Wiki generated successfully from saved state!")
                     wiki_viewer.display_wiki_content(wiki_path)
-                    print("Wiki displayed successfully!")
+                    print("\n[streamlit]:: ✅ Wiki displayed successfully!")
                 else:
                     st.warning(
                         "No wiki path returned from generation. The state file might be invalid or incomplete."

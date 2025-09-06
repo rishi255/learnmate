@@ -35,7 +35,10 @@ from backend.utils import (
     get_topic_directory_name,
 )
 
-EXIT_COMMAND = "exit"  # Command to exit the bot
+
+# Whether to show detailed agent outputs
+# Controlled from here if called from streamlit, else controlled from command-line (--debug option)
+DEBUG_FLAG = False
 
 # ===================
 # Define Structured Output Classes for Agents
@@ -255,7 +258,7 @@ def validate_mermaid_syntax(mermaid_code: str) -> bool:
         str: Error message if invalid or if API call failed, None otherwise.
     """
     resp, error = call_mermaid_api(mermaid_code)
-    print("response in validation: ", resp)
+    print("\t☑️ Validating Mermaid Code...")
     if resp is None:
         print("Error calling Mermaid API:", error)
         return False, error
@@ -300,22 +303,18 @@ def research_agent_node(state: AgentState) -> dict:
                 include_images=True,
             )
         ],
-        # debug=True,
+        debug=DEBUG_FLAG,
         response_format=CombinedResearchOutput,
         prompt=initial_prompt,
     )
 
+    print("🔎 Invoking research agent...")
     messages = [
         HumanMessage(
             f'Now perform research for the given user input: {state["user_input"]}'
         )
     ]
     agent_response = research_agent.invoke({"messages": messages})
-    i = 0
-    for event in agent_response:
-        message = event
-        print(f"Agent message #{i}: {message}")
-        i += 1
 
     structured_response: CombinedResearchOutput = agent_response["structured_response"]
 
@@ -344,6 +343,7 @@ def planner_agent_node(state: AgentState) -> dict:
         input_data=repr(state["combined_research"]),
     )
 
+    print("📙 Invoking planner agent...")
     planner_response = planner_llm.with_structured_output(PlannerOutput).invoke(
         planner_prompt
     )
@@ -396,7 +396,7 @@ def content_writer_agent_node(state: AgentState) -> dict:
                 max_results=10,
             )
         ],
-        debug=True,
+        debug=DEBUG_FLAG,
         response_format=WikiSectionOutput,
         prompt=full_plan_prompt,
     )
@@ -405,7 +405,7 @@ def content_writer_agent_node(state: AgentState) -> dict:
     # this way, we can ensure that the number of sections and section titles remain exactly the same as the input plan
     # and we can just stitch the content into the sections ourselves
     for section in content_writer_result["sections"]:
-        print(f"\n✏️ Generating wiki content for section: {section['title']}")
+        print(f"✏️ Generating wiki content for section: {section['title']}")
         messages = [
             HumanMessage(
                 content=f"""Generate the content for ONLY one section, whose structured plan is given below. 
@@ -467,7 +467,7 @@ def design_coder_agent_node(state: AgentState) -> dict:
                 include_images=True,
             ),
         ],
-        debug=True,
+        debug=DEBUG_FLAG,
         response_format=CodedVisualSectionOutput,
         prompt=visual_prompt,
     )
@@ -478,7 +478,7 @@ def design_coder_agent_node(state: AgentState) -> dict:
     for section in design_coder_result["sections"]:
         if not section.get("visuals"):
             continue
-        print(f"\n🎨 Generating visuals for section: {section['title']}")
+        print(f"🎨 Generating visuals for section: {section['title']}")
         messages = [
             HumanMessage(
                 content=f"Generate visuals for the given wiki section. What follows below is the planned visual specification for the section. Ensure Mermaid diagrams use double quotes for all labels.\n\n{repr(section)}"
@@ -535,6 +535,7 @@ def merge_wiki_and_visuals_node(state: AgentState) -> dict:
     )
 
     # Simple merge logic: Append visuals at the end of the wiki content
+    print("🔨 Merging content and visuals together...")
 
     merged_content = f"# {wiki_output['title']}\n\n"
     for visual_section, content_section in zip(
@@ -558,7 +559,6 @@ def merge_wiki_and_visuals_node(state: AgentState) -> dict:
                     )
                     continue
                 if visual["visual_type"] == "mermaid_diagram":
-                    print("\tRendering Mermaid diagram...")
                     svg_bytes, err = render_mermaid_svg_bytes(visual["code"])
                     if err:
                         base_url = app_cfg.get("mermaid_api_base_url")
@@ -650,12 +650,12 @@ def main(
     graph = build_graph()
 
     # Get image representation of the graph
-    # print("\n📊 Generating graph visualization...")
-    # graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
-    # graph.get_graph().draw_mermaid_png(
-    #     output_file_path=graph_png_save_path,
-    # )
-    # print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
+    print("\n📊 Generating graph visualization...")
+    graph_png_save_path = str(Path(OUTPUTS_DIR) / "wiki_creation_graph.png")
+    graph.get_graph().draw_mermaid_png(
+        output_file_path=graph_png_save_path,
+    )
+    print(f"\t💹 Graph image saved as '{graph_png_save_path}'.")
 
     starting_state: AgentState = {
         "user_input": user_input,  # Initialize with exact user input, not cleaned to give the research agent the exact input
@@ -713,7 +713,7 @@ def main(
     with open(state_file, "w") as f:
         json.dump(final_state, f, indent=4)
 
-    print(f"\n📄 Final state saved in topic directory: '{state_file}'")
+    print(f"📄 Final state saved in topic directory: '{state_file}'")
 
     # Return the path to the generated wiki file
     return final_state.get("final_wiki_path")
@@ -736,7 +736,13 @@ if __name__ == "__main__":
         help="Path to a saved state file to resume from",
         required=False,
     )
+    parser.add_argument(
+        "--debug", type=bool, help="Switch to enable debug mode", required=False
+    )
     args = parser.parse_args()
+
+    # set global dynamically based on passed switch
+    DEBUG_FLAG = args.debug
 
     wiki_path = main(
         user_input=args.topic,

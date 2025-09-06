@@ -31,9 +31,7 @@ def call_mermaid_api(mermaid_code: str) -> tuple[requests.Response | None, str |
         # Request SVG from configured base URL (fallback to public mermaid.ink)
 
         resp = requests.get(f"{base_url}/svg/{base64_string}", timeout=20)
-        print("Here!")
         resp.raise_for_status()
-        print("Still here!")
         return resp, None
     except Exception as e:
         return resp, f"Error generating Mermaid SVG: {e}"
@@ -54,9 +52,7 @@ def render_mermaid_svg_bytes(mermaid_code: str) -> tuple[bytes | None, str | Non
     # Encode Mermaid code as URL-safe Base64 per mermaid.ink API requirements
     resp, error = call_mermaid_api(mermaid_code)
     if error:
-        print(f"In render_mermaid_svg_bytes, error: {error}, resp object: {resp}")
         return None, error
-    print(f"In render_mermaid_svg_bytes (successful!), resp object: {resp}")
     return resp.content, None
 
 
@@ -75,10 +71,3 @@ def svg_bytes_to_data_uri(svg_bytes: bytes) -> str:
     """
     b64 = base64.b64encode(svg_bytes).decode("ascii")
     return f"data:image/svg+xml;base64,{b64}"
-
-
-# if __name__ == "__main__":
-#     # Example usage
-#     mermaid_code = """graph TD; A-->B; B-->C; A-->"""
-#     x = validate_mermaid_syntax(mermaid_code)
-#     print("Valid syntax?", x)
