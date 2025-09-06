@@ -5,86 +5,83 @@
             "title": "Understanding How DNS Works: The Internet's Address Book",
             "topic": "Domain Name System (DNS)",
             "category": "Internet Technology",
-            "summary": "The Domain Name System (DNS) is a hierarchical and distributed naming system that translates human-readable domain names into machine-readable IP addresses, enabling users to access websites and services on the Internet.",
+            "summary": "The Domain Name System (DNS) is a hierarchical and distributed naming system that translates human-readable domain names into machine-readable IP addresses, enabling users to access websites and services on the internet.",
             "key_concepts": [
-                "Domain Names",
-                "IP Addresses",
-                "DNS Resolution",
-                "DNS Servers",
-                "Caching"
+                "Domain Name",
+                "IP Address",
+                "DNS Resolver",
+                "Root Nameserver",
+                "TLD Nameserver",
+                "Authoritative Nameserver",
+                "DNS Caching",
+                "Recursive Query",
+                "Iterative Query",
+                "DNS Propagation"
             ],
             "search_urls": [
                 "https://www.infoblox.com/glossary/domain-name-system-dns/",
-                "https://www.cloudflare.com/learning/dns/what-is-dns/",
+                "https://www.datadoghq.com/knowledge-center/dns-resolution/",
                 "https://en.wikipedia.org/wiki/Domain_Name_System",
-                "https://www.proofpoint.com/us/threat-reference/dns",
-                "https://heimdalsecurity.com/blog/what-is-dns/"
+                "https://www.cloudflare.com/learning/dns/what-is-dns/",
+                "https://www.freecodecamp.org/news/how-dns-works-the-internets-address-book/"
             ]
         },
         "deep_research": {
             "subtopics": [
                 {
-                    "name": "The Structure of DNS",
-                    "description": "The Domain Name System (DNS) is organized hierarchically, consisting of multiple layers of servers that work together to resolve domain names into IP addresses. At the top of this hierarchy are the root nameservers, which direct queries to the appropriate top-level domain (TLD) servers (like .com or .org). Each TLD server then points to authoritative nameservers that contain the actual IP address for the requested domain. This structure ensures redundancy and reliability, as multiple servers can handle requests, preventing a single point of failure.",
-                    "facts": [
-                        "DNS is hierarchical and distributed.",
-                        "Root nameservers are the highest level in the DNS hierarchy.",
-                        "TLD servers manage domains like .com, .org, etc.",
-                        "Authoritative nameservers provide the final IP address for a domain.",
-                        "Redundancy in DNS servers enhances reliability."
-                    ]
-                },
-                {
                     "name": "The DNS Resolution Process",
-                    "description": "The DNS resolution process involves several steps that occur when a user types a domain name into their browser. First, the request is sent to a DNS recursive resolver, which checks its cache for the IP address. If not found, it queries the root nameserver, which directs it to the appropriate TLD server. The TLD server then points to the authoritative nameserver, which returns the IP address to the resolver, and finally, the resolver sends this IP address back to the user's browser, allowing access to the website.",
+                    "description": "This subtopic covers the step-by-step process of how a DNS query is resolved, from the moment a user types a domain name into a browser to the retrieval of the corresponding IP address.",
                     "facts": [
-                        "The process starts with a user entering a domain name.",
-                        "The recursive resolver checks its cache first.",
-                        "If not cached, it queries the root nameserver.",
-                        "The root server directs to the TLD server.",
-                        "The authoritative server provides the final IP address."
+                        "A user types a domain name into a browser, initiating a DNS query.",
+                        "The query is sent to a DNS resolver, which checks its cache for the IP address.",
+                        "If not found, the resolver queries a root nameserver for direction.",
+                        "The root server points to a TLD nameserver, which directs to the authoritative nameserver.",
+                        "The authoritative nameserver returns the IP address to the resolver, which sends it back to the browser."
                     ]
                 },
                 {
-                    "name": "Types of DNS Records",
-                    "description": "DNS records are entries in the DNS database that provide information about a domain, including its associated IP address, mail server information, and other essential data. Common types of DNS records include A records (for IPv4 addresses), AAAA records (for IPv6 addresses), CNAME records (for aliasing), MX records (for mail exchange), and TXT records (for text information). Each record type serves a specific purpose in the DNS infrastructure.",
+                    "name": "Types of DNS Servers",
+                    "description": "An overview of the different types of DNS servers (recursive resolvers, root nameservers, TLD nameservers, and authoritative nameservers) and their specific functions within the DNS hierarchy.",
                     "facts": [
-                        "A records map domain names to IPv4 addresses.",
-                        "AAAA records map domain names to IPv6 addresses.",
-                        "CNAME records allow one domain to point to another.",
-                        "MX records specify mail servers for a domain.",
-                        "TXT records can hold arbitrary text data."
+                        "Recursive resolvers handle client queries and initiate the resolution process.",
+                        "Root nameservers direct queries to TLD nameservers.",
+                        "TLD nameservers manage domains under specific top-level domains.",
+                        "Authoritative nameservers store the actual DNS records for domains."
                     ]
                 },
                 {
-                    "name": "DNS Security",
-                    "description": "DNS security is crucial for protecting the integrity and availability of the DNS infrastructure. Common threats include DNS spoofing, cache poisoning, and DDoS attacks. To mitigate these risks, security measures such as DNSSEC (Domain Name System Security Extensions) are implemented, which add a layer of verification to DNS responses, ensuring that users are directed to legitimate websites and not malicious ones.",
+                    "name": "DNS Caching and Performance",
+                    "description": "This section explains how DNS caching works, its benefits for performance, and the implications of cache expiration.",
+                    "facts": [
+                        "DNS caching stores recent queries to speed up future requests.",
+                        "Cached results reduce the load on DNS servers and improve response times.",
+                        "Cache expiration ensures that outdated information is refreshed."
+                    ]
+                },
+                {
+                    "name": "Common DNS Issues and Troubleshooting",
+                    "description": "Discusses common problems that can arise with DNS (e.g., DNS spoofing, propagation delays) and basic troubleshooting steps.",
                     "facts": [
                         "DNS spoofing can redirect users to malicious sites.",
-                        "Cache poisoning involves corrupting DNS cache entries.",
-                        "DDoS attacks can overwhelm DNS servers.",
-                        "DNSSEC adds security by verifying DNS responses.",
-                        "Regular monitoring and updates are essential for DNS security."
+                        "Propagation delays can cause changes to DNS records to take time to update.",
+                        "Basic troubleshooting includes checking local DNS settings and flushing the DNS cache."
                     ]
                 },
                 {
-                    "name": "Dynamic DNS",
-                    "description": "Dynamic DNS (DDNS) is a service that automatically updates the DNS records for a domain whenever the IP address changes. This is particularly useful for users with dynamic IP addresses, such as those provided by many ISPs. DDNS allows users to maintain a consistent domain name even when their IP address changes, facilitating remote access and other services that rely on a stable address.",
+                    "name": "The Importance of DNS Security",
+                    "description": "An exploration of DNS security measures, including DNSSEC (Domain Name System Security Extensions) and best practices for protecting DNS infrastructure.",
                     "facts": [
-                        "DDNS updates DNS records automatically.",
-                        "Useful for users with dynamic IP addresses.",
-                        "Facilitates remote access to devices.",
-                        "Maintains consistent domain names.",
-                        "Commonly used in home networks and remote services."
+                        "DNSSEC adds a layer of security to prevent DNS spoofing.",
+                        "Best practices include using secure DNS servers and monitoring DNS traffic."
                     ]
                 }
             ],
             "visual_suggestions": [
-                "DNS Resolution Flowchart: A diagram illustrating the step-by-step process of DNS resolution, showing the interaction between different types of DNS servers.",
-                "DNS Hierarchy Diagram: A hierarchical representation of DNS structure, including root servers, TLD servers, and authoritative servers.",
-                "Comparison Table of DNS Record Types: A table summarizing various DNS record types, their functions, and examples.",
-                "Caching Mechanism Illustration: A visual representation of how DNS caching works, showing the benefits of caching in speeding up DNS queries.",
-                "Security Measures Infographic: An infographic outlining common DNS security threats and best practices for securing DNS."
+                "A flowchart illustrating the DNS resolution steps, including the roles of the resolver, root nameserver, TLD nameserver, and authoritative nameserver.",
+                "A diagram showing the hierarchy of DNS servers and their interactions during the resolution process.",
+                "A table comparing cached vs. non-cached DNS queries, highlighting response times and server load.",
+                "A checklist of troubleshooting steps for DNS issues, providing a quick reference for users.",
+                "A flowchart showing how DNSSEC works to secure DNS queries and responses."
             ]
         }
     },
@@ -93,61 +90,61 @@
         "sections": [
             {
                 "title": "## Introduction to DNS",
-                "description": "This section will introduce the Domain Name System (DNS), explaining its fundamental role in the Internet as a naming system that translates human-readable domain names into machine-readable IP addresses. It will provide a brief overview of how DNS functions and its importance in web navigation.",
+                "description": "This section introduces the Domain Name System (DNS), explaining its purpose as the internet's address book. It will cover the basic concepts of domain names and IP addresses, setting the stage for deeper exploration. The section will also highlight the importance of DNS in everyday internet usage.",
                 "visuals": [
                     {
                         "visual_type": "image",
-                        "description": "An introductory image depicting the concept of DNS as the Internet's address book, illustrating the relationship between domain names and IP addresses."
-                    }
-                ]
-            },
-            {
-                "title": "## The Structure of DNS",
-                "description": "This section will delve into the hierarchical structure of DNS, detailing the different layers of servers involved in the DNS resolution process. It will explain the roles of root nameservers, TLD servers, and authoritative nameservers, emphasizing the redundancy and reliability of the DNS system.",
-                "visuals": [
-                    {
-                        "visual_type": "mermaid_diagram",
-                        "description": "A hierarchical diagram illustrating the structure of DNS, showing the relationship between root nameservers, TLD servers, and authoritative nameservers."
+                        "description": "An infographic showing the relationship between domain names and IP addresses, illustrating how DNS translates human-readable names into machine-readable addresses."
                     }
                 ]
             },
             {
                 "title": "## The DNS Resolution Process",
-                "description": "This section will outline the step-by-step process of DNS resolution, detailing what happens when a user enters a domain name into their browser. It will cover the roles of the DNS recursive resolver, root nameserver, TLD server, and authoritative nameserver, providing a clear understanding of how domain names are resolved to IP addresses.",
+                "description": "This section details the step-by-step process of how a DNS query is resolved. It will explain the journey of a DNS query from the moment a user types a domain name into a browser to the retrieval of the corresponding IP address. Key facts will be presented to illustrate each step of the process, enhancing understanding of how DNS functions.",
                 "visuals": [
                     {
                         "visual_type": "mermaid_diagram",
-                        "description": "A flowchart illustrating the DNS resolution process, showing the interaction between the user, DNS recursive resolver, root nameserver, TLD server, and authoritative nameserver."
+                        "description": "A flowchart illustrating the DNS resolution steps, including the roles of the resolver, root nameserver, TLD nameserver, and authoritative nameserver."
                     }
                 ]
             },
             {
-                "title": "## Types of DNS Records",
-                "description": "This section will explain the various types of DNS records, including A records, AAAA records, CNAME records, MX records, and TXT records. It will describe the purpose of each record type and provide examples to illustrate their functions within the DNS infrastructure.",
+                "title": "## Types of DNS Servers",
+                "description": "An overview of the different types of DNS servers, including recursive resolvers, root nameservers, TLD nameservers, and authoritative nameservers. This section will explain the specific functions of each type of server within the DNS hierarchy, providing clarity on their roles in the resolution process.",
+                "visuals": [
+                    {
+                        "visual_type": "mermaid_diagram",
+                        "description": "A diagram showing the hierarchy of DNS servers and their interactions during the resolution process."
+                    }
+                ]
+            },
+            {
+                "title": "## DNS Caching and Performance",
+                "description": "This section explains how DNS caching works and its benefits for performance. It will cover the implications of cache expiration and how caching can improve response times and reduce server load. Key facts will be presented to illustrate the importance of caching in DNS operations.",
                 "visuals": [
                     {
                         "visual_type": "table",
-                        "description": "A comparison table summarizing different types of DNS records, their functions, and examples."
+                        "description": "A table comparing cached vs. non-cached DNS queries, highlighting response times and server load."
                     }
                 ]
             },
             {
-                "title": "## DNS Security",
-                "description": "This section will address the importance of DNS security, discussing common threats such as DNS spoofing, cache poisoning, and DDoS attacks. It will introduce DNSSEC (Domain Name System Security Extensions) as a solution to enhance DNS security and outline best practices for protecting DNS infrastructure.",
+                "title": "## Common DNS Issues and Troubleshooting",
+                "description": "This section discusses common problems that can arise with DNS, such as DNS spoofing and propagation delays. It will provide basic troubleshooting steps to help users resolve these issues effectively. The section aims to empower users with knowledge to handle DNS-related problems.",
                 "visuals": [
                     {
                         "visual_type": "image",
-                        "description": "An infographic outlining common DNS security threats and best practices for securing DNS."
+                        "description": "A checklist of troubleshooting steps for DNS issues, providing a quick reference for users."
                     }
                 ]
             },
             {
-                "title": "## Dynamic DNS",
-                "description": "This section will cover Dynamic DNS (DDNS), explaining how it works and its significance for users with dynamic IP addresses. It will discuss the benefits of DDNS in maintaining consistent domain names and facilitating remote access to devices, particularly in home networks and remote services.",
+                "title": "## The Importance of DNS Security",
+                "description": "An exploration of DNS security measures, including DNSSEC (Domain Name System Security Extensions) and best practices for protecting DNS infrastructure. This section will emphasize the significance of securing DNS queries and responses to prevent malicious activities.",
                 "visuals": [
                     {
-                        "visual_type": "image",
-                        "description": "An illustration showing how Dynamic DNS updates work, highlighting the process of maintaining a consistent domain name despite changing IP addresses."
+                        "visual_type": "mermaid_diagram",
+                        "description": "A flowchart showing how DNSSEC works to secure DNS queries and responses."
                     }
                 ]
             }
@@ -158,27 +155,27 @@
         "sections": [
             {
                 "title": "## Introduction to DNS",
-                "content": "The Domain Name System (DNS) is a critical component of the Internet, serving as its address book. It translates human-readable domain names, such as www.example.com, into machine-readable IP addresses, like 192.0.2.1. This translation is essential because, while humans prefer to use easy-to-remember names, computers and networking equipment communicate using numerical IP addresses.\n\n### How DNS Functions\n\nWhen a user types a domain name into their web browser, the DNS system is responsible for resolving that name into an IP address that the browser can use to locate the desired website. This process involves several steps:\n\n1. **User Input**: The user enters a domain name in the browser.\n2. **DNS Query**: The browser sends a DNS query to a DNS resolver, which is typically provided by the user's Internet Service Provider (ISP).\n3. **Recursive Resolution**: If the resolver does not have the IP address cached, it will query other DNS servers, starting from the root nameservers, then moving to Top-Level Domain (TLD) servers, and finally to authoritative nameservers, which hold the actual IP address for the domain.\n4. **Response**: Once the resolver obtains the IP address, it sends this information back to the user's browser, allowing it to connect to the web server hosting the website.\n\n### Importance of DNS in Web Navigation\n\nDNS is vital for several reasons:\n\n- **User-Friendly Navigation**: It allows users to access websites using easy-to-remember names instead of complex numerical addresses.\n- **Load Distribution**: DNS can distribute traffic across multiple servers, enhancing website performance and reliability.\n- **Email Routing**: DNS also plays a crucial role in directing email traffic through MX (Mail Exchange) records, ensuring that emails reach their intended destinations.\n\nIn summary, the Domain Name System is an indispensable part of the Internet infrastructure, enabling seamless navigation and communication by translating domain names into IP addresses. Its functionality underpins the user experience on the web, making it a foundational element of online activity."
-            },
-            {
-                "title": "## The Structure of DNS",
-                "content": "The Domain Name System (DNS) is structured in a hierarchical manner, which is essential for its functionality and efficiency. This structure consists of several layers of servers, each playing a specific role in the DNS resolution process. Understanding this hierarchy is crucial for grasping how domain names are translated into IP addresses.\n\n### Hierarchical Structure of DNS\n\n1. **Root Nameservers**:\n   - At the top of the DNS hierarchy are the root nameservers. These servers are responsible for directing queries to the appropriate Top-Level Domain (TLD) servers. There are 13 sets of root nameservers, identified by letters A through M, which are distributed globally to ensure redundancy and reliability.\n   - When a DNS query is initiated, if the local resolver does not have the answer cached, it first queries a root nameserver. The root server responds with a referral to the appropriate TLD server based on the domain extension (e.g., .com, .org, .net).\n\n2. **Top-Level Domain (TLD) Servers**:\n   - TLD servers manage the next level of the DNS hierarchy. Each TLD (such as .com, .org, .edu) has its own set of servers that store information about the domain names registered under that TLD.\n   - After receiving a referral from a root nameserver, the DNS resolver queries the relevant TLD server. The TLD server then provides a referral to the authoritative nameserver for the specific domain being requested.\n\n3. **Authoritative Nameservers**:\n   - Authoritative nameservers hold the actual DNS records for domain names. They provide definitive answers to queries about the domain names they manage, including the corresponding IP addresses.\n   - When the DNS resolver queries the authoritative nameserver, it receives the final answer, which includes the IP address associated with the requested domain name. This information is then returned to the user's browser, allowing it to connect to the desired website.\n\n### Redundancy and Reliability\n\nThe hierarchical structure of DNS is designed to be both redundant and reliable. Each layer of the DNS system has multiple servers to ensure that if one server fails, others can take over, minimizing downtime and ensuring continuous availability. For instance:\n\n- **Multiple Root Servers**: The existence of multiple root servers across different geographic locations means that even if one server is unreachable, others can still respond to queries.\n- **TLD and Authoritative Servers**: Similarly, TLD and authoritative nameservers often have multiple instances, which can handle requests and provide responses even during high traffic or server outages.\n\nThis redundancy is critical for maintaining the integrity and performance of the DNS, ensuring that users can reliably access websites without interruption. \n\nIn summary, the hierarchical structure of DNS, comprising root nameservers, TLD servers, and authoritative nameservers, plays a vital role in the efficient resolution of domain names. This layered approach not only facilitates the translation of human-readable domain names into machine-readable IP addresses but also enhances the overall reliability and resilience of the DNS infrastructure."
+                "content": "The Domain Name System (DNS) serves as the backbone of the internet, functioning as its address book. When users want to access a website, they typically enter a human-readable domain name, such as `www.example.com`, into their web browser. However, computers communicate using numerical IP addresses, such as `192.0.2.1`. DNS translates these domain names into IP addresses, enabling browsers to locate and connect to the appropriate servers.\n\n### Basic Concepts of Domain Names and IP Addresses\n\n1. **Domain Names**: A domain name is a string of text that maps to a numeric IP address. It is structured hierarchically, consisting of several parts:\n   - **Top-Level Domain (TLD)**: The last segment of the domain name, such as `.com`, `.org`, or `.net`. TLDs categorize domains based on their purpose or geographical location.\n   - **Second-Level Domain (SLD)**: This is the part of the domain name that comes before the TLD. For example, in `www.example.com`, \"example\" is the SLD.\n   - **Subdomains**: These are prefixes added to the domain name to organize or navigate to different sections of a website. For instance, `blog.example.com` is a subdomain of `example.com`.\n\n2. **IP Addresses**: An IP address is a unique identifier assigned to each device connected to a network. There are two main types of IP addresses:\n   - **IPv4**: The most common format, consisting of four sets of numbers separated by periods (e.g., `192.0.2.1`). It allows for approximately 4.3 billion unique addresses.\n   - **IPv6**: Developed to address the limitations of IPv4, this format uses eight groups of hexadecimal numbers separated by colons (e.g., `2001:0db8:85a3:0000:0000:8a2e:0370:7334`), allowing for a vastly larger number of unique addresses.\n\n### Importance of DNS in Everyday Internet Usage\n\nDNS is crucial for the seamless functioning of the internet. Without it, users would need to remember complex numerical IP addresses instead of simple domain names, making web navigation cumbersome and inefficient. Here are a few key points highlighting the importance of DNS:\n\n- **User-Friendly Navigation**: DNS allows users to access websites easily by typing memorable domain names rather than numerical addresses.\n- **Load Distribution**: DNS can distribute traffic across multiple servers, improving website performance and reliability.\n- **Email Routing**: DNS also plays a vital role in directing email traffic to the correct mail servers, ensuring that messages reach their intended recipients.\n\nIn summary, the Domain Name System is an essential component of the internet, enabling users to navigate the web effortlessly while ensuring efficient communication between devices. Understanding DNS lays the groundwork for exploring its more complex functionalities and the various components involved in the resolution process."
             },
             {
                 "title": "## The DNS Resolution Process",
-                "content": "When a user enters a domain name into their browser, a series of steps occur to translate that human-readable name into a machine-readable IP address. This process is known as DNS resolution, and it involves several key components working together. Here\u2019s a detailed breakdown of each step in the DNS resolution process:\n\n1. **User Request**: The process begins when a user types a domain name (e.g., www.example.com) into their web browser. The browser checks its cache to see if it has recently resolved this domain name to an IP address. If the address is found in the cache, the browser uses it to connect to the website.\n\n2. **DNS Recursive Resolver**: If the IP address is not cached, the browser sends a request to a DNS recursive resolver. This resolver is typically operated by the user's Internet Service Provider (ISP). Its role is to handle the entire DNS resolution process on behalf of the user. \n\n3. **Root Nameserver**: The recursive resolver first queries a root nameserver. The root nameserver does not have the IP address for the requested domain but knows where to find the top-level domain (TLD) servers. For example, for the domain www.example.com, the root nameserver will direct the resolver to the .com TLD server.\n\n4. **TLD Server**: The recursive resolver then queries the appropriate TLD server (in this case, the .com server). The TLD server contains information about the domain names registered under its TLD and can provide the IP address of the authoritative nameserver for the specific domain.\n\n5. **Authoritative Nameserver**: The resolver now queries the authoritative nameserver for the domain (e.g., example.com). This server holds the actual DNS records for the domain, including the A record, which maps the domain name to its corresponding IP address. The authoritative nameserver responds with the IP address of the requested domain.\n\n6. **Returning the IP Address**: The recursive resolver receives the IP address from the authoritative nameserver and caches it for future requests. It then sends this IP address back to the user's browser.\n\n7. **Establishing a Connection**: With the IP address in hand, the browser can now establish a connection to the web server hosting the website. It sends an HTTP request to the server, which responds by delivering the requested web page to the user's browser.\n\n8. **Caching**: To improve efficiency, both the browser and the DNS resolver cache the IP address for a predetermined period (known as the Time to Live, or TTL). This means that subsequent requests for the same domain name can be resolved more quickly without repeating the entire DNS resolution process.\n\nThis multi-step process highlights the collaborative nature of the DNS system, ensuring that users can access websites quickly and efficiently. Each component plays a crucial role in translating domain names into IP addresses, allowing for seamless web navigation."
+                "content": "When a user types a domain name into a web browser, a series of steps occurs to resolve that name into an IP address, allowing the browser to connect to the desired website. This process is known as DNS resolution, and it involves several key components and stages.\n\n### Step 1: User Input  \nThe process begins when a user enters a domain name, such as `www.example.com`, into the browser's address bar. The browser first checks its local cache to see if it has recently resolved this domain name to an IP address.\n\n### Step 2: Local Cache Check  \nIf the IP address is found in the local cache, the browser uses this address to connect to the website. If not, the browser initiates a DNS query to resolve the domain name.\n\n### Step 3: Recursive Resolver  \nThe browser sends the DNS query to a recursive resolver, which is typically provided by the user's Internet Service Provider (ISP). The recursive resolver acts as an intermediary that will handle the query on behalf of the user.\n\n### Step 4: Root Nameserver Query  \nIf the recursive resolver does not have the IP address cached, it queries one of the root nameservers. The root nameservers are the highest level in the DNS hierarchy and can direct the resolver to the appropriate Top-Level Domain (TLD) nameserver based on the domain extension (e.g., `.com`, `.org`).\n\n### Step 5: TLD Nameserver Query  \nThe root nameserver responds with the address of the TLD nameserver for the domain. The recursive resolver then queries this TLD nameserver, which contains information about the domain names registered under that specific TLD.\n\n### Step 6: Authoritative Nameserver Query  \nThe TLD nameserver responds with the address of the authoritative nameserver for the specific domain. The recursive resolver then queries this authoritative nameserver, which holds the actual DNS records for the domain, including the corresponding IP address.\n\n### Step 7: Retrieving the IP Address  \nThe authoritative nameserver responds with the IP address associated with the domain name. This information is sent back to the recursive resolver.\n\n### Step 8: Caching the Result  \nThe recursive resolver caches the IP address for a predetermined period (known as Time to Live, or TTL) to improve future query response times. It then sends the IP address back to the user's browser.\n\n### Step 9: Establishing the Connection  \nFinally, the browser uses the retrieved IP address to establish a connection to the web server hosting the website. The user can now access the desired content.\n\n### Key Facts  \n- **Caching**: Caching at various levels (local, recursive, and authoritative) significantly speeds up the DNS resolution process by reducing the need for repeated queries.  \n- **TTL (Time to Live)**: This value determines how long a DNS record is cached before it must be refreshed, balancing the need for up-to-date information with performance.  \n- **Redundancy**: The DNS system is designed with redundancy in mind, ensuring that if one server fails, others can take over to provide the necessary information.\n\nUnderstanding the DNS resolution process is crucial for grasping how the internet functions, as it highlights the complexity and efficiency of translating human-readable domain names into machine-readable IP addresses."
             },
             {
-                "title": "## Types of DNS Records",
-                "content": "DNS records are essential components of the Domain Name System (DNS), serving as the instructions that help translate domain names into IP addresses and facilitate various internet services. Here are the primary types of DNS records, along with their purposes and examples:\n\n### 1. A Records (Address Records)\nA records map a domain name to its corresponding IPv4 address. This is the most common type of DNS record and is crucial for directing traffic to the correct server.\n\n**Example:**\n- If you have a website at `example.com` with an IP address of `192.0.2.1`, the A record would look like this:\n  \n  ```\n  example.com. IN A 192.0.2.1\n  ```\n\n### 2. AAAA Records (IPv6 Address Records)\nSimilar to A records, AAAA records map a domain name to an IPv6 address. As the internet transitions to IPv6 due to the exhaustion of IPv4 addresses, AAAA records are becoming increasingly important.\n\n**Example:**\n- For a domain `example.com` with an IPv6 address of `2001:0db8:85a3:0000:0000:8a2e:0370:7334`, the AAAA record would be:\n  \n  ```\n  example.com. IN AAAA 2001:0db8:85a3:0000:0000:8a2e:0370:7334\n  ```\n\n### 3. CNAME Records (Canonical Name Records)\nCNAME records allow you to alias one domain name to another. This is useful for pointing multiple domain names to a single IP address without needing to create multiple A records.\n\n**Example:**\n- If you want `www.example.com` to point to `example.com`, the CNAME record would be:\n  \n  ```\n  www.example.com. IN CNAME example.com.\n  ```\n\n### 4. MX Records (Mail Exchange Records)\nMX records specify the mail servers responsible for receiving email on behalf of a domain. They include a priority value that determines the order in which mail servers should be used.\n\n**Example:**\n- For `example.com`, if you have two mail servers, the MX records might look like this:\n  \n  ```\n  example.com. IN MX 10 mail1.example.com.\n  example.com. IN MX 20 mail2.example.com.\n  ```\n\n### 5. TXT Records (Text Records)\nTXT records are used to store arbitrary text data associated with a domain. They are often used for verification purposes, such as domain ownership verification and email security protocols like SPF (Sender Policy Framework).\n\n**Example:**\n- A TXT record for domain verification might look like this:\n  \n  ```\n  example.com. IN TXT \"v=spf1 include:_spf.example.com ~all\"\n  ```\n\n### Summary of DNS Record Types\n\n| Record Type | Purpose                                      | Example                                      |\n|-------------|----------------------------------------------|----------------------------------------------|\n| A           | Maps domain to IPv4 address                  | `example.com. IN A 192.0.2.1`               |\n| AAAA        | Maps domain to IPv6 address                  | `example.com. IN AAAA 2001:0db8:85a3::1`    |\n| CNAME       | Aliases one domain to another                | `www.example.com. IN CNAME example.com.`    |\n| MX          | Specifies mail servers for a domain          | `example.com. IN MX 10 mail.example.com.`   |\n| TXT         | Stores text data for various purposes        | `example.com. IN TXT \"v=spf1 include:_spf.example.com ~all\"` |\n\nUnderstanding these DNS record types is crucial for managing domain names effectively and ensuring that web services function correctly. Each record type plays a specific role in the DNS infrastructure, contributing to the overall functionality of the internet."
+                "title": "## Types of DNS Servers",
+                "content": "In the Domain Name System (DNS), various types of servers work together to resolve domain names into IP addresses. Each type of DNS server has a specific role within the DNS hierarchy, contributing to the overall functionality of the system. Here\u2019s an overview of the main types of DNS servers:\n\n### 1. Recursive Resolvers\nRecursive resolvers, often referred to simply as resolvers, are the first point of contact for a user\u2019s DNS query. When a user types a domain name into their browser, the request is sent to a recursive resolver. The resolver's primary function is to take the domain name and perform the necessary queries to find the corresponding IP address.  \n\n- **Functionality**:  \n  - The resolver checks its cache to see if it has the IP address stored. If not, it initiates a series of queries to other DNS servers.  \n  - It follows the DNS hierarchy, starting from the root nameservers down to the authoritative nameservers, to retrieve the IP address.\n\n### 2. Root Nameservers\nRoot nameservers are at the top of the DNS hierarchy. They do not contain information about specific domain names but instead direct queries to the appropriate Top-Level Domain (TLD) nameservers.\n\n- **Functionality**:  \n  - When a recursive resolver queries a root nameserver, it receives a referral to the TLD nameserver that corresponds to the domain extension (e.g., .com, .org).  \n  - There are 13 sets of root nameservers globally, identified by letters A through M, which are distributed across multiple locations for redundancy and reliability.\n\n### 3. TLD Nameservers\nTop-Level Domain (TLD) nameservers manage the last part of a domain name, such as .com, .net, or .org. They store information about the domain names registered under their respective TLDs.\n\n- **Functionality**:  \n  - After receiving a referral from a root nameserver, the recursive resolver queries the appropriate TLD nameserver.  \n  - The TLD nameserver responds with the IP address of the authoritative nameserver for the specific domain being queried.\n\n### 4. Authoritative Nameservers\nAuthoritative nameservers hold the actual DNS records for a domain. They provide the final answer to the DNS query, returning the IP address associated with the requested domain name.\n\n- **Functionality**:  \n  - When a recursive resolver queries an authoritative nameserver, it retrieves the DNS records, which may include A records (for IPv4 addresses), AAAA records (for IPv6 addresses), MX records (for mail exchange), and others.  \n  - Authoritative nameservers can be primary (master) or secondary (slave), with the primary server holding the original DNS records and the secondary server providing redundancy.\n\n### Summary of Roles\n| Type of DNS Server       | Role in DNS Hierarchy                                      |\n|--------------------------|-----------------------------------------------------------|\n| Recursive Resolvers      | Initiate queries and cache results for efficiency         |\n| Root Nameservers         | Direct queries to TLD nameservers                         |\n| TLD Nameservers          | Manage domain names under specific TLDs                  |\n| Authoritative Nameservers | Provide the final DNS records for domain names            |\n\nUnderstanding these types of DNS servers and their functions is crucial for grasping how the DNS resolution process works. Each server plays a vital role in ensuring that users can access websites quickly and efficiently by translating human-readable domain names into machine-readable IP addresses."
             },
             {
-                "title": "## DNS Security",
-                "content": "DNS security is a critical aspect of maintaining the integrity and reliability of the Internet. As the Domain Name System (DNS) serves as the backbone for translating human-readable domain names into machine-readable IP addresses, any vulnerabilities within this system can lead to significant security threats. Understanding these threats and implementing robust security measures is essential for both individuals and organizations.\n\n### Common Threats to DNS Security\n\n1. **DNS Spoofing (Cache Poisoning)**: This attack involves corrupting the DNS cache of a resolver, causing it to return an incorrect IP address for a domain name. For example, if a user attempts to visit a legitimate website, the attacker can redirect them to a malicious site without their knowledge. This can lead to phishing attacks, where sensitive information such as usernames and passwords are stolen.\n\n2. **DDoS Attacks**: Distributed Denial of Service (DDoS) attacks target DNS servers by overwhelming them with traffic, rendering them unable to respond to legitimate requests. This can lead to website downtime, affecting businesses and users alike. Attackers often use botnets to amplify the scale of these attacks, making them particularly challenging to mitigate.\n\n3. **Domain Hijacking**: In this scenario, an attacker gains unauthorized access to a domain registrar account and changes the registration details of a domain. This can result in the loss of control over the domain, redirecting traffic to malicious sites or causing significant disruptions to services.\n\n### DNSSEC: Enhancing DNS Security\n\nTo combat these threats, the Domain Name System Security Extensions (DNSSEC) were developed. DNSSEC adds a layer of security by enabling DNS responses to be verified for authenticity. It uses cryptographic signatures to ensure that the data received by a resolver has not been tampered with. Here\u2019s how DNSSEC enhances security:\n\n- **Data Integrity**: DNSSEC ensures that the data returned from a DNS query is authentic and has not been altered in transit. This is achieved through the use of digital signatures that validate the source of the DNS data.\n\n- **Authentication**: By requiring DNS records to be signed, DNSSEC helps prevent attackers from injecting false information into the DNS system. This authentication process ensures that users are directed to the correct IP addresses.\n\n- **Chain of Trust**: DNSSEC establishes a chain of trust from the root DNS servers down to the authoritative nameservers. Each level of the DNS hierarchy is responsible for signing its own records, creating a secure path for DNS queries.\n\n### Best Practices for Protecting DNS Infrastructure\n\nTo further enhance DNS security, organizations should adopt the following best practices:\n\n- **Implement DNSSEC**: Enabling DNSSEC on your domain can significantly reduce the risk of DNS spoofing and cache poisoning attacks. Ensure that both your authoritative nameservers and your domain registrar support DNSSEC.\n\n- **Regularly Update DNS Software**: Keeping DNS software up to date is crucial for protecting against known vulnerabilities. Regular updates can patch security flaws and improve overall system resilience.\n\n- **Monitor DNS Traffic**: Implementing monitoring tools can help detect unusual patterns in DNS traffic that may indicate a DDoS attack or other malicious activities. Early detection allows for quicker response and mitigation.\n\n- **Use Redundant DNS Servers**: Deploying multiple DNS servers across different geographic locations can enhance reliability and provide failover options in case of an attack on one server.\n\n- **Educate Users**: Training users about the risks associated with DNS security, such as phishing and social engineering attacks, can help reduce the likelihood of successful attacks.\n\nBy understanding the threats to DNS security and implementing robust measures like DNSSEC and best practices, organizations can protect their DNS infrastructure and ensure a safer browsing experience for users."
+                "title": "## DNS Caching and Performance",
+                "content": "DNS caching is a crucial mechanism that enhances the performance and efficiency of the Domain Name System (DNS). When a user requests a domain name, the DNS resolver retrieves the corresponding IP address. To optimize this process, DNS caching temporarily stores the results of these queries, allowing subsequent requests for the same domain to be resolved more quickly.\n\n### How DNS Caching Works\n\n1. **Initial Query**: When a user first types a domain name into their browser, the DNS resolver checks its cache to see if it has the IP address stored.\n2. **Cache Hit**: If the IP address is found in the cache (a cache hit), the resolver returns it immediately, significantly speeding up the response time.\n3. **Cache Miss**: If the IP address is not in the cache (a cache miss), the resolver must query other DNS servers, starting from the root nameservers down to the authoritative nameservers, to obtain the IP address.\n4. **Storing the Result**: Once the resolver retrieves the IP address, it stores this information in its cache for future requests. The cached entry will have a Time to Live (TTL) value, which dictates how long the information remains valid.\n\n### Benefits of DNS Caching\n\n- **Improved Response Times**: By serving cached results, DNS resolvers can respond to queries much faster, reducing the time users wait to access websites.\n- **Reduced Server Load**: Caching decreases the number of queries sent to authoritative DNS servers, which helps to alleviate traffic and load on these servers. This is particularly beneficial during peak usage times.\n- **Network Efficiency**: Caching minimizes the amount of data that needs to be transmitted over the internet, leading to more efficient use of bandwidth.\n\n### Implications of Cache Expiration\n\nThe TTL value associated with each cached entry is critical for maintaining the accuracy of DNS information. Once the TTL expires, the cached entry is considered stale, and the resolver must perform a new query to refresh the data. This mechanism ensures that users receive up-to-date information, but it also means that frequently changing records may lead to more cache misses, temporarily increasing response times.\n\n### Key Facts About DNS Caching\n\n- **TTL Values**: TTL values can vary significantly, ranging from a few seconds to several days, depending on the domain's configuration and the nature of the content.\n- **Cache Size**: The size of the DNS cache can affect performance; larger caches can store more entries, but they may also take longer to search through.\n- **Negative Caching**: DNS resolvers also implement negative caching, which stores failed queries (e.g., when a domain does not exist) for a specified period to avoid repeated unnecessary queries.\n\nIn summary, DNS caching plays a vital role in enhancing the performance of the DNS infrastructure. By understanding how caching works and its implications, users and administrators can better appreciate its importance in ensuring a fast and reliable internet experience."
             },
             {
-                "title": "## Dynamic DNS",
-                "content": "Dynamic DNS (DDNS) is a service that automatically updates the DNS records for a domain name whenever the IP address of the host changes. This is particularly useful for users with dynamic IP addresses, which are commonly assigned by Internet Service Providers (ISPs) to residential customers. Unlike static IP addresses, which remain constant, dynamic IP addresses can change frequently, making it challenging to access devices remotely using a consistent domain name.\n\n### How Dynamic DNS Works\n\n1. **Dynamic IP Address Assignment**: When a device connects to the internet, it is assigned a dynamic IP address by the ISP. This address can change at any time, especially after a router reboot or a lease expiration.\n\n2. **DDNS Client**: A DDNS client runs on the device or router that needs to be accessed remotely. This client monitors the current IP address and detects any changes.\n\n3. **Update Process**: When the DDNS client detects a change in the IP address, it sends an update request to the DDNS service provider. This request includes the new IP address and the domain name associated with it.\n\n4. **DNS Record Update**: The DDNS service provider updates the DNS records for the domain name to reflect the new IP address. This ensures that when someone tries to access the domain name, they are directed to the correct, current IP address.\n\n### Significance of Dynamic DNS\n\nDynamic DNS is particularly significant for several reasons:\n\n- **Consistent Access**: Users can access their devices (such as security cameras, home servers, or gaming consoles) using a consistent domain name, regardless of changes in the underlying IP address. This is crucial for remote access applications.\n\n- **Home Networks**: Many home users have devices that require remote access, such as smart home systems or file servers. DDNS allows these devices to be reached easily without needing to remember changing IP addresses.\n\n- **Cost-Effective Solution**: For small businesses or home users, DDNS provides a cost-effective way to maintain a presence on the internet without the need for a static IP address, which often comes with additional costs from ISPs.\n\n- **Facilitating Remote Services**: DDNS is essential for services that require remote connectivity, such as Virtual Private Networks (VPNs), remote desktop applications, and online gaming. It simplifies the connection process for users by providing a stable domain name.\n\n### Benefits of Using Dynamic DNS\n\n- **Ease of Use**: Users do not need to manually update their DNS records every time their IP address changes, which saves time and reduces the risk of errors.\n\n- **Improved Accessibility**: With DDNS, users can access their devices from anywhere in the world, as long as they have internet connectivity.\n\n- **Enhanced Security**: Some DDNS services offer additional security features, such as encryption and authentication, to protect the connection to the device.\n\nIn summary, Dynamic DNS is a vital tool for users with dynamic IP addresses, enabling them to maintain consistent access to their devices and services, thereby enhancing their overall internet experience."
+                "title": "## Common DNS Issues and Troubleshooting",
+                "content": "DNS can encounter various issues that may disrupt connectivity or lead to incorrect website resolutions. Understanding these common problems and knowing how to troubleshoot them can empower users to maintain a smooth internet experience. Below are some prevalent DNS issues along with their causes and basic troubleshooting steps.\n\n### Common DNS Issues\n\n1. **DNS Spoofing (Cache Poisoning)**:\n   - **Description**: This occurs when a malicious actor alters the DNS records in a resolver's cache, redirecting users to fraudulent websites.\n   - **Symptoms**: Users may find themselves on unexpected sites, or they may receive warnings about insecure connections.\n\n2. **Propagation Delays**:\n   - **Description**: When DNS records are updated, it can take time for these changes to propagate across the internet. This delay can lead to inconsistencies in website accessibility.\n   - **Symptoms**: Users may be unable to access a newly launched website or may still see an old version of a site.\n\n3. **DNS Server Unavailability**:\n   - **Description**: If the DNS server is down or unreachable, users will not be able to resolve domain names to IP addresses.\n   - **Symptoms**: Users may experience timeouts or errors indicating that the server cannot be found.\n\n4. **Incorrect DNS Configuration**:\n   - **Description**: Misconfigured DNS settings can lead to failures in resolving domain names.\n   - **Symptoms**: Users may receive error messages indicating that the domain cannot be found.\n\n5. **Slow DNS Resolution**:\n   - **Description**: Sometimes, DNS queries may take longer than usual to resolve, leading to slow loading times for websites.\n   - **Symptoms**: Users may notice that websites take longer to load or experience intermittent connectivity issues.\n\n### Basic Troubleshooting Steps\n\n1. **Flush DNS Cache**:\n   - On Windows, open Command Prompt and type `ipconfig /flushdns`.\n   - On macOS, open Terminal and type `sudo killall -HUP mDNSResponder`.\n   - This clears the local DNS cache, which can resolve issues caused by outdated or corrupted entries.\n\n2. **Change DNS Servers**:\n   - Consider switching to a public DNS service like Google DNS (8.8.8.8 and 8.8.4.4) or Cloudflare DNS (1.1.1.1).\n   - This can help if your current DNS server is slow or unreliable.\n\n3. **Check Network Connection**:\n   - Ensure that your device is connected to the internet. Restarting your router can also help resolve connectivity issues.\n\n4. **Verify DNS Settings**:\n   - Check your device\u2019s network settings to ensure that the DNS server addresses are correctly configured.\n   - Ensure that there are no typos in the domain name being accessed.\n\n5. **Use Online DNS Tools**:\n   - Utilize online tools like `dnschecker.org` to verify if a domain is resolving correctly across different locations.\n   - This can help identify if the issue is local or widespread.\n\n6. **Contact Your ISP**:\n   - If problems persist, reach out to your Internet Service Provider (ISP) for assistance. They may be able to provide insights or resolve issues on their end.\n\nBy familiarizing yourself with these common DNS issues and troubleshooting steps, you can effectively address many of the problems that may arise, ensuring a more reliable internet experience."
+            },
+            {
+                "title": "## The Importance of DNS Security",
+                "content": "DNS security is a critical aspect of maintaining the integrity and reliability of internet communications. As the backbone of the internet's addressing system, the Domain Name System (DNS) is often targeted by malicious actors seeking to exploit vulnerabilities. Understanding and implementing robust security measures is essential to protect against various threats.\n\n### DNSSEC (Domain Name System Security Extensions)\n\nOne of the primary security measures for DNS is DNSSEC, which stands for Domain Name System Security Extensions. DNSSEC adds a layer of security to the DNS protocol by enabling the verification of the authenticity of DNS responses. Here\u2019s how it works:\n\n- **Digital Signatures**: DNSSEC uses public key cryptography to sign DNS data. Each zone (a portion of the DNS namespace) has a pair of cryptographic keys: a private key used to sign the data and a public key used to verify the signatures.\n- **Chain of Trust**: DNSSEC establishes a chain of trust from the root DNS servers down to the authoritative nameservers. This means that if a user queries a domain, the response can be verified at each level of the DNS hierarchy, ensuring that the data has not been tampered with.\n- **Prevention of Spoofing**: By validating the authenticity of DNS responses, DNSSEC helps prevent attacks such as DNS spoofing, where an attacker provides false DNS responses to redirect users to malicious sites.\n\n### Best Practices for Protecting DNS Infrastructure\n\nIn addition to implementing DNSSEC, there are several best practices that organizations can adopt to enhance the security of their DNS infrastructure:\n\n1. **Regular Updates and Patching**: Keeping DNS software and systems up to date is crucial. Regularly applying security patches helps protect against known vulnerabilities.\n   \n2. **Access Control**: Limit access to DNS servers and management interfaces. Use strong authentication methods to ensure that only authorized personnel can make changes to DNS records.\n\n3. **Monitoring and Logging**: Implement monitoring tools to detect unusual activity or potential attacks on DNS servers. Keeping detailed logs can help in identifying and responding to security incidents.\n\n4. **Redundancy and Failover**: Use multiple DNS servers and configure them for redundancy. This ensures that if one server is compromised or fails, others can continue to provide DNS services.\n\n5. **Use of DNS Filtering**: Employ DNS filtering solutions to block access to known malicious domains. This can help prevent users from inadvertently visiting harmful websites.\n\n6. **Educating Users**: Training staff and users about the importance of DNS security and recognizing phishing attempts can significantly reduce the risk of successful attacks.\n\n### Conclusion\n\nSecuring DNS is vital for maintaining the overall security of internet communications. By implementing DNSSEC and following best practices, organizations can protect their DNS infrastructure from various threats, ensuring that users can trust the information they receive online."
             }
         ]
     },
@@ -189,21 +186,10 @@
                 "title": "## Introduction to DNS",
                 "visuals": [
                     {
-                        "title": "DNS as the Internet's Address Book",
+                        "title": "Infographic on Domain Names and IP Addresses",
                         "visual_type": "image",
                         "code": "",
-                        "image_url": "https://5gstore.com/images/About_DNS.png"
-                    }
-                ]
-            },
-            {
-                "title": "## The Structure of DNS",
-                "visuals": [
-                    {
-                        "title": "Hierarchical Structure of DNS",
-                        "visual_type": "mermaid_diagram",
-                        "code": "graph TD;\n    A[\"Root Nameservers\"] --> B[\"TLD Servers\"];\n    B --> C[\"Authoritative Nameservers\"];\n    C --> D[\"Domain Name\"];\n    A --> E[\"Redundancy\"];\n    B --> F[\"Reliability\"];\n    C --> G[\"DNS Resolution Process\"];\n    style A fill:#f9f,stroke:#333,stroke-width:2px;\n    style B fill:#bbf,stroke:#333,stroke-width:2px;\n    style C fill:#bfb,stroke:#333,stroke-width:2px;\n    style D fill:#ffb,stroke:#333,stroke-width:2px;\n    style E fill:#ff9,stroke:#333,stroke-width:2px;\n    style F fill:#9ff,stroke:#333,stroke-width:2px;\n    style G fill:#fff,stroke:#333,stroke-width:2px;",
-                        "image_url": ""
+                        "image_url": "https://img.webnots.com/2015/01/Domain-Name-and-IP-Mapping.png"
                     }
                 ]
             },
@@ -213,41 +199,52 @@
                     {
                         "title": "DNS Resolution Process Flowchart",
                         "visual_type": "mermaid_diagram",
-                        "code": "flowchart TD\n    A[\"User\"] -->|\"Enters domain name\"| B[\"DNS Recursive Resolver\"]\n    B -->|\"Queries\"| C[\"Root Nameserver\"]\n    C -->|\"Responds with TLD server\"| D[\"TLD Server\"]\n    D -->|\"Responds with Authoritative Nameserver\"| E[\"Authoritative Nameserver\"]\n    E -->|\"Responds with IP address\"| B\n    B -->|\"Returns IP address\"| A\n",
+                        "code": "flowchart TD\n    A[\"User types domain name\"] --> B[\"DNS Resolver receives query\"]\n    B --> C[\"Query sent to Root Nameserver\"]\n    C --> D[\"Root Nameserver responds with TLD Nameserver\"]\n    D --> E[\"Query sent to TLD Nameserver\"]\n    E --> F[\"TLD Nameserver responds with Authoritative Nameserver\"]\n    F --> G[\"Query sent to Authoritative Nameserver\"]\n    G --> H[\"Authoritative Nameserver responds with IP address\"]\n    H --> I[\"DNS Resolver returns IP address to User\"]",
                         "image_url": ""
                     }
                 ]
             },
             {
-                "title": "## Types of DNS Records",
+                "title": "## Types of DNS Servers",
                 "visuals": [
                     {
-                        "title": "Comparison Table of DNS Records",
+                        "title": "Hierarchy of DNS Servers",
+                        "visual_type": "mermaid_diagram",
+                        "code": "graph TD;\n    A[\"User\"] -->|\"Queries\"| B[\"Recursive Resolver\"];\n    B -->|\"Queries\"| C[\"Root Nameserver\"];\n    C -->|\"Queries\"| D[\"TLD Nameserver\"];\n    D -->|\"Queries\"| E[\"Authoritative Nameserver\"];\n    E -->|\"Responds\"| B;\n    B -->|\"Responds\"| A;",
+                        "image_url": ""
+                    }
+                ]
+            },
+            {
+                "title": "## DNS Caching and Performance",
+                "visuals": [
+                    {
+                        "title": "Comparison of Cached vs. Non-Cached DNS Queries",
                         "visual_type": "table",
-                        "code": "| Record Type | Function                                      | Example                      |\n|-------------|-----------------------------------------------|------------------------------|\n| A           | Maps a domain name to an IPv4 address        | example.com \u2192 192.0.2.1      |\n| AAAA        | Maps a domain name to an IPv6 address        | example.com \u2192 2001:db8::1    |\n| CNAME       | Alias of one domain to another                | www.example.com \u2192 example.com|\n| MX          | Specifies mail exchange servers for a domain  | example.com \u2192 mail.example.com|\n| TXT         | Holds arbitrary text data, often for verification | example.com \u2192 \"v=spf1 include:_spf.example.com ~all\" ",
+                        "code": "| Query Type         | Response Time (ms) | Server Load (Requests) |\n|---------------------|---------------------|-------------------------|\n| Cached              | 5                   | 1                       |\n| Non-Cached          | 50                  | 10                      |.",
                         "image_url": ""
                     }
                 ]
             },
             {
-                "title": "## DNS Security",
+                "title": "## Common DNS Issues and Troubleshooting",
                 "visuals": [
                     {
-                        "title": "Infographic on DNS Security Threats",
+                        "title": "DNS Troubleshooting Checklist",
                         "visual_type": "image",
                         "code": "",
-                        "image_url": "https://efficientip.com/wp-content/uploads/2023/10/2023-IDC-Threat-Report-infographic-01-1583x2048.jpg"
+                        "image_url": "https://help.checkoutchamp.com/~gitbook/ogimage/2e3ZcAm8oLXLor2RWd0B"
                     }
                 ]
             },
             {
-                "title": "## Dynamic DNS",
+                "title": "## The Importance of DNS Security",
                 "visuals": [
                     {
-                        "title": "Dynamic DNS Updates Illustration",
-                        "visual_type": "image",
-                        "code": "",
-                        "image_url": "https://www.teldat.com/wp-content/uploads/2022/06/alejandromunoz2.png"
+                        "title": "How DNSSEC Works",
+                        "visual_type": "mermaid_diagram",
+                        "code": "flowchart TD\n    A[\"User Request\"] --> B[\"DNS Resolver\"]\n    B --> C[\"DNSSEC Enabled\"]\n    C --> D[\"Query Signed\"]\n    D --> E[\"DNS Response\"]\n    E --> F[\"Response Verified\"]\n    F --> G[\"User Receives Valid Response\"]\n    E --> H[\"Response Not Verified\"]\n    H --> I[\"User Warned of Potential Attack\"]\n    ",
+                        "image_url": ""
                     }
                 ]
             }
