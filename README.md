@@ -11,7 +11,7 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
 - ⚡ **Parallel Processing** - Lightning-fast generation with multiple AI agents
 - 💾 **Never Lose Progress** - Built-in state management for interrupted runs
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Frontend UI)
 
 1. 📦 Set up dependencies (choose one):
 
@@ -32,14 +32,38 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
    pip install -r requirements.txt
    ```
 
-2. 🎬 Run the generator:
+2. 🎬 Run the Streamlit UI:
+
+   ```bash
+   streamlit run frontend/app.py
+   ```
+
+   This launches a browser interface where you can enter a topic, generate a wiki, and manage saved states.
+
+3. 🔄 Resume from a saved state (optional)
+
+   The pipeline saves state after each successful node. If a run is interrupted, you can resume from the last checkpoint by uploading the saved state file from the sidebar.
+
+   The saved state file will be placed at `outputs/Your_Topic/saved_wiki_state.json`.
+
+   You can also manually edit the state file to modify or retry specific steps.
+
+> [!WARNING]
+> When manually editing the state file, always maintain sequential dependency in the order the keys appear (e.g., `wiki_content` requires `structure_plan` which requires `combined_research`).
+
+## 🛠️ CLI Usage (Optional)
+
+If you prefer to use the CLI directly:
+
+1. 🎬 Run the generator:
 
    ```bash
    python backend/main.py
    ```
 
-3. 🔄 Resume from a saved state (optional)  
-   The pipeline saves state after each successful node. If a run is interrupted, you can resume from the last checkpoint:
+2. 🔄 Resume from a saved state (optional)  
+
+   The pipeline saves state after each successful node. If a run is interrupted, you can resume from the last checkpoint using:
 
    ```bash
    python backend/main.py --state outputs/Your_Topic/saved_wiki_state.json
@@ -47,14 +71,8 @@ Transform any topic into a comprehensive wiki in minutes! LearnMate uses a team 
 
    You can also manually edit the state file to modify or retry specific steps.
 
-   > [!WARNING]
-   > When manually editing the state file, always maintain sequential dependency in the order the keys appear (e.g., `wiki_content` requires `structure_plan` which requires `initial_research` and `deep_research`).
-
-## 🖥️ Run the Streamlit UI
-
-```bash
-streamlit run frontend/app.py
-```
+> [!WARNING]
+> When manually editing the state file, always maintain sequential dependency in the order the keys appear (e.g., `wiki_content` requires `structure_plan` which requires `combined_research`).
 
 ## ⚙️ Configuration
 
@@ -62,14 +80,14 @@ The wiki generation process can be configured via the following files:
 
 ### config/config.yaml
 
-- research_model_llm: LLM for the initial research phase (e.g., gpt-4o-mini)
-- planner_model_llm: LLM for planning content structure
-- content_writer_model_llm: LLM for generating text content
-- design_coder_model_llm: LLM for generating visual code (Mermaid/table/image specs)
-- mermaid_api_base_url: Base URL for the Mermaid render service
-  - Default: https://mermaid.ink
-  - To use a local renderer: set to http://localhost:3000 (or your local service URL)
-- reasoning_strategies: Named strategies that prompts can reference (e.g., CoT, ReAct, Self-Ask)
+- `research_model_llm`: LLM for the initial research phase (e.g., gpt-4o-mini)
+- `planner_model_llm`: LLM for planning content structure
+- `content_writer_model_llm`: LLM for generating text content
+- `design_coder_model_llm`: LLM for generating visual code (Mermaid/table/image specs)
+- `mermaid_api_base_url`: Base URL for the Mermaid render service
+  - Default: [https://mermaid.ink](https://mermaid.ink)
+  - To use a local renderer: set to [http://localhost:3000](http://localhost:3000) (or your local service URL)
+- `reasoning_strategies`: Named strategies that prompts can reference (e.g., CoT, ReAct, Self-Ask)
 
 ### .streamlit/config.toml (Theme)
 
@@ -98,8 +116,8 @@ font = "sans serif"
 
 Set at least one provider key and select the corresponding model in config/config.yaml:
 
-- GROQ_API_KEY
-- OPENAI_API_KEY
+- `GROQ_API_KEY`
+- `OPENAI_API_KEY`
 
 ## 📚 Design Docs and Architecture
 
@@ -114,9 +132,7 @@ Set at least one provider key and select the corresponding model in config/confi
 
 - Mermaid diagrams are rendered automatically in the final wiki output.
 - The render service can be optionally configured via `config/config.yaml` (key: `mermaid_api_base_url`).
-- If rendering fails (e.g., service unavailable), the original ````mermaid` fenced code block is embedded as a fallback.
-
-## 💾 State Management
+- If rendering fails (e.g., service unavailable), the original \`\`\`\`mermaid\` fenced code block is embedded as a fallback.
 
 ## 💾 Smart State Management
 
@@ -125,18 +141,6 @@ Never lose your progress! The system automatically saves your work:
 - ✅ Automatic checkpoints after each successful step
 - 📁 Organized state files in `outputs/[Topic_Name]/`
 - 🔄 Easy resumption from any interruption
-- ✅ Automatic checkpoints are saved to `outputs/[Topic_Name]/` after each successful step.
-- 📁 Saved state file: `outputs/[Topic_Name]/saved_wiki_state.json`
-- 🔄 Easily resume at any point with:
-
-```python
-python backend/main.py --state outputs/Your_Topic/saved_wiki_state.json
-```
-
-- ✏️ Manually edit the state file to modify or retry specific steps
-
-> [!WARNING]
-> When manually editing the state file, always maintain sequential dependency in the order the keys appear (e.g., `wiki_content` requires `structure_plan` which requires `initial_research` and `deep_research`).
 
 ## 📊 Project Status
 
@@ -147,9 +151,9 @@ Available now:
 - Visual generation
 - Clean UI
 - State management
+- Enhanced tool calling
 
 On the Horizon:
 
 - Advanced validation layer
-- Smarter tool usage
 - Additional UI enhancements in Streamlit
